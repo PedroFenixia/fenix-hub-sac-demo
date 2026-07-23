@@ -479,7 +479,24 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .col.accion{border-color:var(--warn);}
 .col.accion .colh{background:var(--warn-bg);}
 .colh .doing{font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--warn); background:var(--surface); border:1px solid currentColor; border-radius:20px; padding:1px 7px;}
-.board{grid-template-columns:repeat(5,minmax(210px,1fr));}
+.board{grid-template-columns:repeat(6,minmax(196px,1fr));}
+
+/* ---------- Filtros con selectores ---------- */
+.fgroup{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;}
+.fsel{display:flex; flex-direction:column; gap:5px;}
+.fsel>span{font-size:10.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted);}
+.fsel select{
+  font-size:13px; font-family:inherit; color:var(--ink); background:var(--surface);
+  border:1px solid var(--line); border-radius:9px; padding:9px 32px 9px 12px; cursor:pointer;
+  min-width:172px; appearance:none; outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a94a1' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 11px center;
+}
+.fsel select:hover{border-color:var(--muted);}
+.fsel select:focus{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
+.fsel select:disabled{opacity:.45; cursor:not-allowed;}
+.clearf{font-size:12.5px; font-weight:600; color:var(--text); background:none; border:1px solid var(--line); border-radius:9px; padding:9px 13px; cursor:pointer; font-family:inherit;}
+.clearf:hover{border-color:var(--danger); color:var(--danger);}
 
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -625,12 +642,12 @@ var DB = {
     {cod:'ART-006', nombre:'Gas refrigerante R32 (kg)',    cat:'Climatización', emp:'climatiza',  stock:18,  min:8,   pvp:22.00}
   ],
   tickets: [
-    {ref:'TCK-108', asunto:'El aire de la 3ª planta no enfría',   cliente:'marina', prio:'Alta',  estado:'Abierto',  agente:'Lucía', creado:hAgo(3.2),  desc:'La unidad interior arranca pero no baja de 26 ºC.', area:'3ª planta', msgs:[
+    {ref:'TCK-108', asunto:'El aire de la 3ª planta no enfría',   cliente:'marina', prio:'Alta',  estado:'En curso',  agente:'Lucía', creado:hAgo(3.2),  desc:'La unidad interior arranca pero no baja de 26 ºC.', area:'3ª planta', msgs:[
       {de:'cliente', txt:'Los clientes de las habitaciones 301 a 315 se quejan desde ayer.', t:hAgo(3.2)},
       {de:'agente', txt:'Recibido. Paso aviso al técnico de guardia, vamos esta tarde.', t:hAgo(2.8)},
       {de:'nota', txt:'Nota interna: probable avería del compresor exterior, llevar repuesto.', t:hAgo(2.7)}
     ]},
-    {ref:'TCK-107', asunto:'Cuadro eléctrico salta con lluvia',   cliente:'delta',  prio:'Media', estado:'En curso', agente:'Marc',  creado:hAgo(2.5),  desc:'Salta el diferencial general los días de lluvia.', area:'Sótano', msgs:[
+    {ref:'TCK-107', asunto:'Cuadro eléctrico salta con lluvia',   cliente:'delta',  prio:'Media', estado:'Asignado', agente:'Marc',  creado:hAgo(2.5),  desc:'Salta el diferencial general los días de lluvia.', area:'Sótano', msgs:[
       {de:'cliente', txt:'Van tres veces esta semana, siempre cuando llueve fuerte.', t:hAgo(2.5)},
       {de:'agente', txt:'Suena a humedad en una caja de derivación. Vamos mañana a primera hora.', t:hAgo(1.9)}
     ]},
@@ -668,9 +685,10 @@ function misEmpresas(){
 function puedeVer(empId){ return !empId || misEmpresas().indexOf(empId)>-1; }
 function esAdmin(){ return yo().rol==='Administrador'; }
 
-var ESTADOS_TICKET = ['Abierto','En curso','Esperando al cliente','Resuelto','Cerrado'];
-/* Estados que exigen acción del equipo. El resto espera a otro o ya está hecho. */
-var ESTADOS_ACCION = ['Abierto','En curso'];
+var ESTADOS_TICKET = ['Abierto','Asignado','En curso','Esperando al cliente','Resuelto','Cerrado'];
+/* Requiere acción = nadie lo ha cogido todavía. En cuanto tiene técnico
+   asignado ya hay alguien que responde, así que sale del recuento. */
+var ESTADOS_ACCION = ['Abierto'];
 function requiereAccion(t){ return ESTADOS_ACCION.indexOf(t.estado)>-1; }
 function esperaCliente(t){ return t.estado==='Esperando al cliente'; }
 function hora(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -737,7 +755,7 @@ function fechaCorta(d){
 }
 var COLOR_ESTADO = {
   'Abierto':'var(--danger)','En curso':'var(--warn)','Resuelto':'var(--ok)','Cerrado':'var(--neutral)',
-  'Esperando al cliente':'var(--ticket)',
+  'Asignado':'var(--warn)', 'Esperando al cliente':'var(--ticket)',
   'Borrador':'var(--neutral)','Confirmado':'var(--vega)','Facturado':'var(--ok)'
 };
 function chipEmpresa(empId){
@@ -794,7 +812,8 @@ function gestion(t){
   if(t.estado==='Cerrado')  return {k:'listo',   txt:'Cerrado',  pend:false};
   if(t.estado==='Resuelto') return {k:'listo',   txt:'Resuelto', pend:false};
   if(esperaCliente(t))      return {k:'espera',  txt:'Esperando tu respuesta', pend:false};
-  if(t.estado==='En curso') return {k:'encurso', txt:'En curso', pend:false};
+  if(t.estado==='En curso') return {k:'encurso', txt:'Técnico trabajando', pend:false};
+  if(t.estado==='Asignado') return {k:'encurso', txt:'Técnico asignado',   pend:false};
   return {k:'esperando', txt:'Abierto', pend:true};
 }
 
@@ -817,16 +836,6 @@ function vBandeja(){
     porEstado[e] = DB.tickets.filter(function(t){ return t.estado===e; }).length;
   });
 
-  var pillsEmp = DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
-    return '<button class="pill'+(filtroEmp===e.id?' on':'')+'" data-emp="'+e.id+'"><i style="background:'+e.color+'"></i>'+esc(e.nombre)+'</button>';
-  }).join('');
-
-  var pillsEst = ESTADOS_TICKET.map(function(e){
-    return '<button class="pill'+(filtroEstado===e?' on':'')+'" data-estf="'+e+'">'
-      + '<i style="background:'+COLOR_ESTADO[e]+'"></i>'+e
-      + (porEstado[e]?' · '+porEstado[e]:'')+'</button>';
-  }).join('');
-
   var cabecera = ''
   + '<div class="kpis">'
   +   '<button class="kpi kpiact'+(kpiAccion?' k-amber':'')+(filtroEstado==='accion'?' on':'')+'" data-estf="accion">'
@@ -836,22 +845,32 @@ function vBandeja(){
   +   '<div class="kpi k-red"><div class="n">'+kpiStock+'</div><div class="l">Stock <b>bajo mínimos</b></div></div>'
   + '</div>'
   + '<div class="filterbar">'
-  +   '<div class="frow" id="empFilter">'
-  +     '<span class="fllabel">Empresa</span>'
-  +     '<button class="pill'+(filtroEmp==='all'?' on':'')+'" data-emp="all">Todas</button>'+pillsEmp
-  +   '</div>'
-  +   '<div class="frow" id="estFilter">'
-  +     '<span class="fllabel">Estado</span>'
-  +     '<button class="pill'+(filtroEstado==='all'?' on':'')+'" data-estf="all">Todos</button>'
-  +     '<button class="pill'+(filtroEstado==='accion'?' on':'')+'" data-estf="accion" style="font-weight:700">'
-  +       '<i style="background:var(--warn)"></i>Requieren acción'+(kpiAccion?' · '+kpiAccion:'')+'</button>'
-  +     '<span style="width:1px;height:20px;background:var(--line);margin:0 3px"></span>'+pillsEst
-  +   '</div>'
   +   '<div class="frow between">'
-  +     '<div class="toggle" id="typeToggle">'
-  +       '<button data-type="all" class="'+(filtroTipo==='all'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Todo</button>'
-  +       '<button data-type="ticket" class="'+(filtroTipo==='ticket'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Avisos</button>'
-  +       '<button data-type="parte" class="'+(filtroTipo==='parte'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Partes</button>'
+  +     '<div class="fgroup">'
+  +       '<label class="fsel"><span>Empresa</span>'
+  +         '<select id="selEmp">'
+  +           '<option value="all"'+(filtroEmp==='all'?' selected':'')+'>Todas</option>'
+  +           DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
+              var n = DB.partes.filter(function(p){return p.emp===e.id;}).length;
+              return '<option value="'+e.id+'"'+(filtroEmp===e.id?' selected':'')+'>'+esc(e.nombre)+' ('+n+')</option>';
+            }).join('')
+  +         '</select></label>'
+  +       '<label class="fsel"><span>Estado</span>'
+  +         '<select id="selEst">'
+  +           '<option value="all"'+(filtroEstado==='all'?' selected':'')+'>Todos</option>'
+  +           '<option value="accion"'+(filtroEstado==='accion'?' selected':'')+'>▸ Requieren acción ('+kpiAccion+')</option>'
+  +           ESTADOS_TICKET.map(function(e){
+              return '<option value="'+e+'"'+(filtroEstado===e?' selected':'')+'>'+esc(e)+' ('+(porEstado[e]||0)+')</option>';
+            }).join('')
+  +         '</select></label>'
+  +       '<label class="fsel"><span>Mostrar</span>'
+  +         '<select id="selTipo"'+(modo==='tablero'?' disabled':'')+'>'
+  +           '<option value="all"'+(filtroTipo==='all'?' selected':'')+'>Avisos y partes</option>'
+  +           '<option value="ticket"'+(filtroTipo==='ticket'?' selected':'')+'>Solo avisos</option>'
+  +           '<option value="parte"'+(filtroTipo==='parte'?' selected':'')+'>Solo partes</option>'
+  +         '</select></label>'
+  +       (filtroEmp!=='all'||filtroEstado!=='all'||filtroTipo!=='all'
+          ? '<button class="clearf" id="clearF">Quitar filtros</button>' : '')
   +     '</div>'
   +     '<div class="viewpick" id="viewPick">'
   +       '<button data-modo="lista" class="'+(modo==='lista'?'on':'')+'"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lista</button>'
@@ -1441,6 +1460,8 @@ function crearParte(){
     actuacion:'Pendiente de detallar por el técnico.', materiales:[], fecha:fechaCorta(new Date())
   });
   t.estado = 'En curso';
+  t.msgs = t.msgs || [];
+  t.msgs.push({de:'sistema', txt:'Parte '+ref+' creado · el técnico se pone en marcha', t:new Date()});
   cerrarModal();
   toast('Parte '+ref+' creado · factura '+e.nombre);
   filtroEstado='all'; current = 'partes'; render();
@@ -1470,22 +1491,12 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
-  var ef = e.target.closest('[data-estf]');
-  if(ef){
-    var v = ef.getAttribute('data-estf');
-    filtroEstado = (filtroEstado===v && v!=='all') ? 'all' : v;
-    if(filtroEstado!=='all' && filtroTipo==='parte') filtroTipo='all';
-    render(); return;
-  }
+  var kp = e.target.closest('[data-estf]');
+  if(kp){ filtroEstado = kp.getAttribute('data-estf'); if(filtroTipo==='parte') filtroTipo='all'; render(); return; }
+  if(e.target.id==='clearF'){ filtroEmp='all'; filtroEstado='all'; filtroTipo='all'; render(); return; }
 
   var mp = e.target.closest('#viewPick button');
   if(mp){ modo = mp.getAttribute('data-modo'); render(); return; }
-
-  var pill = e.target.closest('#empFilter .pill');
-  if(pill && pill.getAttribute('data-emp')){ filtroEmp = pill.getAttribute('data-emp'); render(); return; }
-
-  var tg = e.target.closest('#typeToggle button');
-  if(tg){ if(tg.disabled) return; filtroTipo = tg.getAttribute('data-type'); render(); return; }
 
   if(e.target.closest('input,select,textarea,button')) return;
 
@@ -1512,6 +1523,11 @@ function enviarPortal(){
   pintarPortal(); render();
 }
 
+id('viewRoot').addEventListener('change', function(e){
+  if(e.target.id==='selEmp'){ filtroEmp = e.target.value; render(); return; }
+  if(e.target.id==='selEst'){ filtroEstado = e.target.value; if(filtroTipo==='parte') filtroTipo='all'; render(); return; }
+  if(e.target.id==='selTipo'){ filtroTipo = e.target.value; render(); return; }
+});
 id('portalWrap').addEventListener('change', function(e){
   if(e.target.name==='pPrio') pintarHint();
 });
@@ -1557,8 +1573,8 @@ id('dBody').addEventListener('click', function(e){
     t.msgs = t.msgs || [];
     t.msgs.push({de:tipo, txt:txt, t:new Date()});
     if(tipo==='cliente' && t.estado==='Abierto'){
-      t.estado = 'En curso';
-      t.msgs.push({de:'sistema', txt:'El aviso pasa a En curso', t:new Date()});
+      t.estado = 'Asignado';
+      t.msgs.push({de:'sistema', txt:'El aviso pasa a Asignado', t:new Date()});
     }
     id('msgTxt').value='';
     toast(tipo==='nota' ? 'Nota interna guardada · el cliente no la ve' : 'Respuesta enviada al cliente');
