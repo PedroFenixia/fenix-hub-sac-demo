@@ -498,6 +498,14 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .clearf{font-size:12.5px; font-weight:600; color:var(--text); background:none; border:1px solid var(--line); border-radius:9px; padding:9px 13px; cursor:pointer; font-family:inherit;}
 .clearf:hover{border-color:var(--danger); color:var(--danger);}
 
+/* ---------- Finales: resuelto (ok) vs cerrado sin resolver (ko) ---------- */
+.tkstate.ko{background:var(--neutral-bg); color:var(--neutral); text-decoration:line-through; text-decoration-thickness:1px;}
+.col[data-col="Cerrado"] .colh b{color:var(--muted);}
+.col[data-col="Cerrado"] .kc{opacity:.72;}
+
+.sumbox{display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--muted);}
+.sumbox b{font-size:16px; color:var(--ink); font-variant-numeric:tabular-nums;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -656,6 +664,11 @@ var DB = {
       {de:'agente', txt:'Para subir a cubierta necesitamos que el administrador nos autorice el acceso. ¿Podéis confirmarlo?', t:hAgo(7.5)},
       {de:'sistema', txt:'El aviso queda en pausa a la espera del cliente', t:hAgo(7.5)}
     ]},
+    {ref:'TCK-103', asunto:'Persiana atascada en recepción', cliente:'marina', prio:'Baja', estado:'Cerrado', motivo:'Fuera de contrato', agente:'Pedro', creado:hAgo(48), desc:'La persiana de recepción no sube del todo.', area:'Recepción', msgs:[
+      {de:'cliente', txt:'La persiana de recepción se queda a medias.', t:hAgo(48)},
+      {de:'agente', txt:'La cerrajería no entra en vuestro contrato de mantenimiento; os pasamos contacto de un industrial.', t:hAgo(46)},
+      {de:'sistema', txt:'Cerrado sin resolver · Fuera de contrato (Pedro R.)', t:hAgo(46)}
+    ]},
     {ref:'TCK-104', asunto:'Revisión anual del sistema contra incendios', cliente:'delta', prio:'Baja', estado:'Pendiente soporte', agente:'Marc', creado:hAgo(11), desc:'Toca la revisión anual obligatoria.', area:'Todo el edificio', msgs:[
       {de:'cliente', txt:'¿Podéis pasar la semana del 28?', t:hAgo(11)},
       {de:'agente', txt:'Sí. ¿Nos confirmáis a qué hora podemos acceder al archivo del sótano?', t:hAgo(9)},
@@ -668,10 +681,10 @@ var DB = {
     ]}
   ],
   partes: [
-    {ref:'PT-054', ticket:'TCK-108', asunto:'Sustitución de compresor unidad exterior', cliente:'marina', emp:'climatiza', estado:'Borrador',   tecnico:'M. López', horas:2.17, coste:20, venta:38, actuacion:'Retirada de compresor averiado y montaje de unidad nueva', materiales:[{cod:'ART-001',cant:1},{cod:'ART-006',cant:3.6}], fecha:'20 jul'},
-    {ref:'PT-053', ticket:null,      asunto:'Cambio de termostatos zonas comunes',      cliente:'olivos', emp:'vega',      estado:'Confirmado', tecnico:'Pedro R.', horas:1.5,  coste:20, venta:38, actuacion:'Sustitución de 4 termostatos y calibración',            materiales:[{cod:'ART-002',cant:4}], fecha:'19 jul'},
-    {ref:'PT-052', ticket:null,      asunto:'Revisión y filtros climatizador',          cliente:'delta',  emp:'electrosur',estado:'Facturado',  tecnico:'Marc S.',  horas:0.92, coste:20, venta:38, actuacion:'Revisión general y cambio de filtros',                  materiales:[{cod:'ART-003',cant:8}], fecha:'18 jul'},
-    {ref:'PT-051', ticket:null,      asunto:'Reparación cableado obrador',              cliente:'horno',  emp:'vega',      estado:'Borrador',   tecnico:'Pedro R.', horas:3.08, coste:18, venta:35, actuacion:'Sustitución de cableado dañado en obrador',             materiales:[{cod:'ART-004',cant:39}], fecha:'17 jul'}
+    {ref:'PT-054', creado:hAgo(5.5), ticket:'TCK-108', asunto:'Sustitución de compresor unidad exterior', cliente:'marina', emp:'climatiza', estado:'Borrador',   tecnico:'M. López', horas:2.17, coste:20, venta:38, actuacion:'Retirada de compresor averiado y montaje de unidad nueva', materiales:[{cod:'ART-001',cant:1},{cod:'ART-006',cant:3.6}], fecha:'20 jul'},
+    {ref:'PT-053', creado:hAgo(28), ticket:null,      asunto:'Cambio de termostatos zonas comunes',      cliente:'olivos', emp:'vega',      estado:'Confirmado', tecnico:'Pedro R.', horas:1.5,  coste:20, venta:38, actuacion:'Sustitución de 4 termostatos y calibración',            materiales:[{cod:'ART-002',cant:4}], fecha:'19 jul'},
+    {ref:'PT-052', creado:hAgo(52), ticket:null,      asunto:'Revisión y filtros climatizador',          cliente:'delta',  emp:'electrosur',estado:'Facturado',  tecnico:'Marc S.',  horas:0.92, coste:20, venta:38, actuacion:'Revisión general y cambio de filtros',                  materiales:[{cod:'ART-003',cant:8}], fecha:'18 jul'},
+    {ref:'PT-051', creado:hAgo(76), ticket:null,      asunto:'Reparación cableado obrador',              cliente:'horno',  emp:'vega',      estado:'Borrador',   tecnico:'Pedro R.', horas:3.08, coste:18, venta:35, actuacion:'Sustitución de cableado dañado en obrador',             materiales:[{cod:'ART-004',cant:39}], fecha:'17 jul'}
   ],
   facturas: [
     {doc:'FAC E-0031', parte:'PT-052', estado:'Emitida'}
@@ -693,13 +706,14 @@ function puedeVer(empId){ return !empId || misEmpresas().indexOf(empId)>-1; }
 function esAdmin(){ return yo().rol==='Administrador'; }
 
 var ESTADOS_TICKET = ['Abierto','Pendiente soporte','Asignado','En curso','Esperando al cliente','Resuelto','Cerrado'];
+/* Finales: Resuelto es un buen final, Cerrado es un final sin solución. */
+var MOTIVOS_CIERRE = ['El cliente desiste','No era una avería','Duplicado de otro aviso','Fuera de contrato'];
 /* Requiere acción = la pelota está en el tejado del soporte:
    «Abierto» (nadie lo ha cogido) y «Pendiente soporte» (el cliente ya
    contestó y toca responderle). Con técnico asignado o trabajando, no. */
 var ESTADOS_ACCION = ['Abierto','Pendiente soporte'];
 function requiereAccion(t){ return ESTADOS_ACCION.indexOf(t.estado)>-1; }
 function esperaCliente(t){ return t.estado==='Esperando al cliente'; }
-function hora(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function selloMsg(d){
   var hoy = new Date();
   var mismo = d.toDateString()===hoy.toDateString();
@@ -757,12 +771,31 @@ function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function ini(n){ if(!n) return '?'; var p=n.trim().split(/\s+/); return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase(); }
 function horasTxt(h){ var t=Math.round(h*60); return Math.floor(t/60)+' h '+String(t%60).padStart(2,'0')+' min'; }
 function id(x){ return document.getElementById(x); }
+function hora(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function fechaCorta(d){
   var M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   return d.getDate()+' '+M[d.getMonth()];
 }
+/* Fecha con hora: «hoy 14:32», «ayer 09:15» o «18 jul 11:40». */
+function fechaHora(d){
+  var hoy = new Date(), ayer = new Date(hoy.getTime()-86400000);
+  if(d.toDateString()===hoy.toDateString())  return 'hoy '+hora(d);
+  if(d.toDateString()===ayer.toDateString()) return 'ayer '+hora(d);
+  return fechaCorta(d)+' '+hora(d);
+}
+/* Cuánto hace, para lo muy reciente. */
+function haceQue(d){
+  var m = Math.round((Date.now()-d.getTime())/60000);
+  if(m < 1)  return 'ahora mismo';
+  if(m < 60) return 'hace '+m+' min';
+  var h = Math.floor(m/60);
+  if(h < 24) return 'hace '+h+' h';
+  var dd = Math.floor(h/24);
+  return 'hace '+dd+' día'+(dd===1?'':'s');
+}
 var COLOR_ESTADO = {
   'Abierto':'var(--danger)','En curso':'var(--warn)','Resuelto':'var(--ok)','Cerrado':'var(--neutral)',
+  'Cerrado sin resolver':'var(--neutral)',
   'Pendiente soporte':'var(--danger)', 'Asignado':'var(--warn)', 'Esperando al cliente':'var(--ticket)',
   'Borrador':'var(--neutral)','Confirmado':'var(--vega)','Facturado':'var(--ok)'
 };
@@ -780,6 +813,7 @@ function chipEstado(est){
    ============================================================ */
 var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
 var modo='lista', filtroEstado='all';
+var pEmp='all', pEstado='all', pTecnico='all';
 var VIEWS = {
   bandeja:    {title:'Bandeja',             sub:'Avisos y partes de trabajo de todas las empresas',              ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
@@ -799,11 +833,13 @@ function filas(){
   var out = [];
   DB.tickets.forEach(function(t){
     out.push({tipo:'ticket', ref:t.ref, asunto:t.asunto, cliente:cliDe(t.cliente).nombre,
-              emp:null, estado:t.estado, agente:t.agente, orden:t.creado.getTime(), fecha:fechaCorta(t.creado)});
+              emp:null, estado:t.estado, agente:t.agente, orden:t.creado.getTime(),
+              fecha:fechaHora(t.creado), titulo:haceQue(t.creado)});
   });
   DB.partes.forEach(function(p){
     out.push({tipo:'parte', ref:p.ref, asunto:p.asunto, cliente:cliDe(p.cliente).nombre,
-              emp:p.emp, estado:p.estado, agente:p.tecnico, orden:0, fecha:p.fecha});
+              emp:p.emp, estado:p.estado, agente:p.tecnico, orden:0,
+              fecha:p.creado?fechaHora(p.creado):p.fecha, titulo:p.creado?haceQue(p.creado):''});
   });
   return out.sort(function(a,b){ return b.ref.localeCompare(a.ref); });
 }
@@ -817,8 +853,8 @@ function coincide(txt){ return q==='' || txt.toLowerCase().indexOf(q)>-1; }
    ============================================================ */
 /* Cómo va el aviso, en lenguaje del cliente. */
 function gestion(t){
-  if(t.estado==='Cerrado')  return {k:'listo',   txt:'Cerrado',  pend:false};
-  if(t.estado==='Resuelto') return {k:'listo',   txt:'Resuelto', pend:false};
+  if(t.estado==='Cerrado')  return {k:'ko',    txt:'Cerrado sin resolver'+(t.motivo?' · '+t.motivo:''), pend:false};
+  if(t.estado==='Resuelto') return {k:'listo', txt:'Resuelto', pend:false};
   if(esperaCliente(t))      return {k:'espera',  txt:'Esperando tu respuesta', pend:false};
   if(t.estado==='En curso') return {k:'encurso', txt:'Técnico trabajando', pend:false};
   if(t.estado==='Pendiente soporte') return {k:'esperando', txt:'Con el equipo de soporte', pend:true};
@@ -919,14 +955,14 @@ function cuerpoLista(){
       + '<td>'+chipEstado(r.estado)+'</td>'
       + '<td>'+(sla ? '<span class="sla sla-'+sla.clase+'">'+esc(sla.txt)+'</span>' : '<span class="none">—</span>')+'</td>'
       + '<td>'+esc(r.agente)+'</td>'
-      + '<td class="r">'+(t && sinConvertir(t)
+      + '<td>'+(t && sinConvertir(t)
           ? '<span class="rowact"><button class="tbtn solid" data-convert="'+r.ref+'">Convertir en parte</button></span>'
-          : '<span class="fch">'+esc(r.fecha)+'</span>')+'</td></tr>';
+          : '<span class="fch" title="'+esc(r.titulo)+'">'+esc(r.fecha)+'</span>')+'</td></tr>';
   }).join('');
 
   return '<p class="rowcount">Mostrando '+fs.length+' de '+filas().length+' registros</p>'
   + '<div class="card clickable"><div class="tablewrap"><table>'
-  +   '<thead><tr><th>Tipo</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa que factura</th><th>Estado</th><th>SLA</th><th>Agente</th><th class="r">Fecha</th></tr></thead>'
+  +   '<thead><tr><th>Tipo</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa que factura</th><th>Estado</th><th>SLA</th><th>Agente</th><th>Fecha</th></tr></thead>'
   +   '<tbody>'+body+'</tbody></table></div>'
   +   (fs.length?'':'<div class="blank"><div class="ico">◦</div><b>Nada que mostrar con este filtro</b><span>Cambia la empresa, el tipo o limpia el buscador.</span></div>')
   + '</div>'
@@ -965,7 +1001,52 @@ function cuerpoTablero(){
 }
 
 function vPartes(){
-  var ps = DB.partes.filter(function(p){ return puedeVer(p.emp); }).filter(function(p){ return coincide(p.ref+' '+p.asunto+' '+cliDe(p.cliente).nombre+' '+p.tecnico+' '+p.estado); });
+  var todos = DB.partes.filter(function(p){ return puedeVer(p.emp); });
+  var tecnicos = todos.map(function(p){return p.tecnico;})
+                      .filter(function(v,i,a){ return a.indexOf(v)===i; }).sort();
+  var ESTADOS_PARTE = ['Borrador','Confirmado','Facturado'];
+
+  var ps = todos.filter(function(p){
+    if(pEmp!=='all' && p.emp!==pEmp) return false;
+    if(pEstado!=='all' && p.estado!==pEstado) return false;
+    if(pTecnico!=='all' && p.tecnico!==pTecnico) return false;
+    return coincide(p.ref+' '+p.asunto+' '+cliDe(p.cliente).nombre+' '+p.tecnico+' '+p.estado);
+  });
+
+  var totalVenta = ps.reduce(function(a,p){ return a+valorar(p).total; },0);
+  var totalMargen = ps.reduce(function(a,p){ var v=valorar(p); return a+(v.total-(v.mat+v.costeMO)); },0);
+
+  var filtros = ''
+  + '<div class="filterbar"><div class="frow between"><div class="fgroup">'
+  +   '<label class="fsel"><span>Empresa</span><select id="pSelEmp">'
+  +     '<option value="all"'+(pEmp==='all'?' selected':'')+'>Todas</option>'
+  +     DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
+          var n = todos.filter(function(p){return p.emp===e.id;}).length;
+          return '<option value="'+e.id+'"'+(pEmp===e.id?' selected':'')+'>'+esc(e.nombre)+' ('+n+')</option>';
+        }).join('')
+  +   '</select></label>'
+  +   '<label class="fsel"><span>Estado</span><select id="pSelEst">'
+  +     '<option value="all"'+(pEstado==='all'?' selected':'')+'>Todos</option>'
+  +     ESTADOS_PARTE.map(function(e){
+          var n = todos.filter(function(p){return p.estado===e;}).length;
+          return '<option value="'+e+'"'+(pEstado===e?' selected':'')+'>'+esc(e)+' ('+n+')</option>';
+        }).join('')
+  +   '</select></label>'
+  +   '<label class="fsel"><span>Técnico</span><select id="pSelTec">'
+  +     '<option value="all"'+(pTecnico==='all'?' selected':'')+'>Todos</option>'
+  +     tecnicos.map(function(t){
+          var n = todos.filter(function(p){return p.tecnico===t;}).length;
+          return '<option value="'+esc(t)+'"'+(pTecnico===t?' selected':'')+'>'+esc(t)+' ('+n+')</option>';
+        }).join('')
+  +   '</select></label>'
+  +   (pEmp!=='all'||pEstado!=='all'||pTecnico!=='all'
+      ? '<button class="clearf" id="pClearF">Quitar filtros</button>' : '')
+  + '</div>'
+  + '<div class="sumbox"><span>'+ps.length+' parte'+(ps.length===1?'':'s')+'</span>'
+  +   '<b>'+eur(totalVenta)+'</b>'
+  +   '<span class="margin-chip'+(totalMargen<0?' neg':'')+'">margen '+eur(totalMargen)+'</span></div>'
+  + '</div></div>';
+
   var body = ps.map(function(p){
     var v = valorar(p);
     return '<tr data-open="parte:'+p.ref+'">'
@@ -974,13 +1055,16 @@ function vPartes(){
       + '<td>'+chipEmpresa(p.emp)+'</td>'
       + '<td>'+chipEstado(p.estado)+'</td>'
       + '<td><span class="tavatar">'+ini(p.tecnico)+'</span>'+esc(p.tecnico)+'</td>'
+      + '<td>'+(p.creado ? '<span class="fch" title="'+esc(haceQue(p.creado))+'">'+esc(fechaHora(p.creado))+'</span>' : '<span class="fch">'+esc(p.fecha)+'</span>')+'</td>'
       + '<td class="r mono">'+horasTxt(p.horas)+'</td>'
       + '<td class="r amount">'+eur(v.total)+'</td></tr>';
   }).join('');
-  return '<div class="card clickable"><div class="tablewrap"><table>'
-  + '<thead><tr><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa</th><th>Estado</th><th>Técnico</th><th class="r">Tiempo</th><th class="r">Importe</th></tr></thead>'
+
+  return filtros
+  + '<div class="card clickable"><div class="tablewrap"><table>'
+  + '<thead><tr><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa</th><th>Estado</th><th>Técnico</th><th>Fecha</th><th class="r">Tiempo</th><th class="r">Importe</th></tr></thead>'
   + '<tbody>'+body+'</tbody></table></div>'
-  + (ps.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún parte coincide</b><span>Prueba con otra referencia, cliente o técnico.</span></div>')+'</div>'
+  + (ps.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún parte coincide</b><span>Prueba con otro filtro, referencia o técnico.</span></div>')+'</div>'
   + '<p class="cap">Cada parte lleva su mano de obra (horas × precio/hora de coste y de venta) más los materiales del almacén. Pulsa un parte para ver y ajustar la valoración.</p>';
 }
 
@@ -1121,7 +1205,7 @@ function pintarPortal(){
     var visibles = (t.msgs||[]).filter(function(x){ return x.de!=='nota'; });
     return '<div class="tk">'
       + '<div class="l1"><span class="ti">'+esc(t.asunto)+'</span><span class="r">'+esc(t.ref)+'</span></div>'
-      + '<div class="meta">'+esc(t.area)+' · abierto el '+fechaCorta(t.creado)+'</div>'
+      + '<div class="meta">'+esc(t.area)+' · abierto '+fechaHora(t.creado)+' ('+haceQue(t.creado)+')</div>'
       + '<div class="tkbar '+s2.clase+'"><span style="width:'+pct+'%"></span></div>'
       + '<div class="l2">'+chipEstado(t.estado)
       +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span></div>'
@@ -1240,7 +1324,8 @@ function abrirTicket(ref){
     + drow('Estado', t.estado) + drow('Agente', t.agente)
     + drow('Prioridad', t.prio)
     + relojSla(t, s)
-    + drow('Área', t.area) + drow('Creado', fechaCorta(t.creado))
+    + drow('Área', t.area) + drow('Creado', fechaHora(t.creado)+' · '+haceQue(t.creado))
+    + (t.estado==='Cerrado' && t.motivo ? drow('Motivo del cierre', t.motivo) : '')
     + '<div class="dsec">Acciones</div>'
     + '<div class="dsec">Estado del aviso</div>'
     + '<div class="statepick">'+ESTADOS_TICKET.map(function(x){
@@ -1297,6 +1382,7 @@ function abrirParte(ref){
     + '<div class="drow"><span>Estado</span><span>'+chipEstado(p.estado)+'</span></div>'
     + '<div class="drow"><span>Técnico</span><span><span class="davatar">'+ini(p.tecnico)+'</span>'+esc(p.tecnico)+'</span></div>'
     + drow('Actuación', p.actuacion)
+    + (p.creado ? drow('Fecha del parte', fechaHora(p.creado)) : '')
     + (f ? drow('Factura', f.doc) : '')
     + '<div class="dsec">Mano de obra</div>'
     + '<table class="lab"><tbody>'
@@ -1463,6 +1549,30 @@ function registrarEntrada(){
   current='almacen'; render();
 }
 
+function abrirModalCierre(ref){
+  modalTipo = 'cierre';
+  modalTicket = ref;
+  var t = ticketDe(ref);
+  id('mTitle').textContent = 'Cerrar sin resolver';
+  id('mOk').textContent = 'Cerrar el aviso';
+  id('mSub').innerHTML = 'El aviso <b>'+esc(t.ref)+'</b> se cierra sin haberse resuelto. Si el trabajo se hizo, usa <b>Resuelto</b> en su lugar.';
+  id('mBody').innerHTML = '<div class="pform"><label for="cMot">Motivo del cierre</label>'
+    + '<select id="cMot">'+MOTIVOS_CIERRE.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select>'
+    + '<p class="prio-hint">Queda registrado en la conversación y el cliente lo ve en su portal.</p></div>';
+  id('modal').classList.add('show');
+}
+
+function cerrarSinResolver(){
+  var t = ticketDe(modalTicket), motivo = id('cMot').value;
+  t.estado = 'Cerrado';
+  t.motivo = motivo;
+  t.msgs = t.msgs || [];
+  t.msgs.push({de:'sistema', txt:'Cerrado sin resolver · '+motivo+' ('+yo().nombre+')', t:new Date()});
+  cerrarModal();
+  toast(t.ref+' cerrado sin resolver · '+motivo);
+  abrirTicket(t.ref); render();
+}
+
 function crearParte(){
   var t = ticketDe(modalTicket), e = empDe(modalEmp);
   if(!t || !e) return;
@@ -1470,7 +1580,7 @@ function crearParte(){
   DB.partes.unshift({
     ref:ref, ticket:t.ref, asunto:t.asunto, cliente:t.cliente, emp:e.id, estado:'Borrador',
     tecnico:t.agente, horas:1, coste:e.coste, venta:e.venta,
-    actuacion:'Pendiente de detallar por el técnico.', materiales:[], fecha:fechaCorta(new Date())
+    actuacion:'Pendiente de detallar por el técnico.', materiales:[], creado:new Date(), fecha:fechaCorta(new Date())
   });
   t.estado = 'En curso';
   t.msgs = t.msgs || [];
@@ -1507,6 +1617,7 @@ id('viewRoot').addEventListener('click', function(e){
   var kp = e.target.closest('[data-estf]');
   if(kp){ filtroEstado = kp.getAttribute('data-estf'); if(filtroTipo==='parte') filtroTipo='all'; render(); return; }
   if(e.target.id==='clearF'){ filtroEmp='all'; filtroEstado='all'; filtroTipo='all'; render(); return; }
+  if(e.target.id==='pClearF'){ pEmp='all'; pEstado='all'; pTecnico='all'; render(); return; }
 
   var mp = e.target.closest('#viewPick button');
   if(mp){ modo = mp.getAttribute('data-modo'); render(); return; }
@@ -1540,6 +1651,9 @@ id('viewRoot').addEventListener('change', function(e){
   if(e.target.id==='selEmp'){ filtroEmp = e.target.value; render(); return; }
   if(e.target.id==='selEst'){ filtroEstado = e.target.value; if(filtroTipo==='parte') filtroTipo='all'; render(); return; }
   if(e.target.id==='selTipo'){ filtroTipo = e.target.value; render(); return; }
+  if(e.target.id==='pSelEmp'){ pEmp = e.target.value; render(); return; }
+  if(e.target.id==='pSelEst'){ pEstado = e.target.value; render(); return; }
+  if(e.target.id==='pSelTec'){ pTecnico = e.target.value; render(); return; }
 });
 id('portalWrap').addEventListener('change', function(e){
   if(e.target.name==='pPrio') pintarHint();
@@ -1612,6 +1726,8 @@ id('dBody').addEventListener('click', function(e){
     var tRef2 = drawerRef.split(':')[1], t2 = ticketDe(tRef2);
     var nuevo = est.getAttribute('data-estado');
     if(t2.estado===nuevo) return;
+    if(nuevo==='Cerrado'){ abrirModalCierre(tRef2); return; }
+    if(t2.estado==='Cerrado') t2.motivo = null;
     t2.estado = nuevo;
     t2.msgs = t2.msgs || [];
     t2.msgs.push({de:'sistema', txt:'Estado cambiado a '+nuevo+' por '+yo().nombre, t:new Date()});
@@ -1664,7 +1780,11 @@ id('modal').addEventListener('click', function(e){
   if(e.target===id('modal')) cerrarModal();
 });
 id('mCancel').addEventListener('click', cerrarModal);
-id('mOk').addEventListener('click', function(){ modalTipo==='stock' ? registrarEntrada() : crearParte(); });
+id('mOk').addEventListener('click', function(){
+  if(modalTipo==='stock')  return registrarEntrada();
+  if(modalTipo==='cierre') return cerrarSinResolver();
+  crearParte();
+});
 
 id('dClose').addEventListener('click', cerrarDrawer);
 id('overlay').addEventListener('click', cerrarDrawer);
