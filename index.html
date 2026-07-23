@@ -598,10 +598,10 @@ tbody tr.corte td{border-top:2px solid var(--line);}
     <div class="brandrule"></div>
     <nav class="nav" id="nav">
       <button class="item on" data-view="bandeja"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M2 12h6l2 3h4l2-3h6"/></svg></span>Bandeja<span class="cnt" id="cntCola">0</span></button>
-      <button class="item" data-view="partes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span>Partes de trabajo<span class="cnt" id="cntPartes">0</span></button>
+      <button class="item" data-view="partes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span>Partes de trabajo</button>
       <button class="item" data-view="clientes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
       <button class="item" data-view="articulos"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></span>Artículos</button>
-      <button class="item" data-view="almacen"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V8l9-4 9 4v13"/><path d="M3 21h18"/><rect x="8" y="13" width="8" height="8"/></svg></span>Almacén<span class="cnt" id="cntStock">0</span></button>
+      <button class="item" data-view="almacen"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V8l9-4 9 4v13"/><path d="M3 21h18"/><rect x="8" y="13" width="8" height="8"/></svg></span>Almacén</button>
       <button class="item" data-view="facturacion"><span class="ic"><svg viewBox="0 0 24 24"><path d="M18 6.5A7 7 0 1 0 18 17.5"/><path d="M5 10.5h9M5 13.5h7"/></svg></span>Facturación</button>
       <div class="sec">Vista cliente</div>
       <button class="item" data-view="portal"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg></span>Portal de cliente</button>
@@ -1539,8 +1539,6 @@ function render(){
   badge.classList.toggle('hidden', pend===0);
   badge.classList.toggle('alerta', pend>0);
   badge.title = pend ? pend+' aviso'+(pend===1?'':'s')+' pendiente'+(pend===1?'':'s')+' de gestionar' : '';
-  id('cntPartes').textContent = DB.partes.filter(function(p){return puedeVer(p.emp);}).length;
-  id('cntStock').textContent = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock<a.min;}).length;
   var a = yo(), n = misEmpresas().length;
   id('userAv').textContent = ini(a.nombre);
   id('userName').textContent = a.nombre+' · '+a.rol;
