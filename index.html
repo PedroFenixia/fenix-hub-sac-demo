@@ -472,16 +472,16 @@ function chipEstado(est){
    ============================================================ */
 var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
 var VIEWS = {
-  bandeja:    {title:'Bandeja única',      sub:'Todos los tickets y partes de trabajo, de todas las empresas', ph:'Buscar ticket, parte o cliente…'},
-  cola:       {title:'Cola de entrada',    sub:'Tickets sin convertir, ordenados por vencimiento de SLA',       ph:'Buscar en la cola…'},
-  partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…'},
-  clientes:   {title:'Clientes',           sub:'Empresas cliente y su actividad',                               ph:'Buscar cliente…'},
-  articulos:  {title:'Artículos',          sub:'Catálogo de materiales y precios',                              ph:'Buscar artículo…'},
-  almacen:    {title:'Almacén',            sub:'Existencias por almacén y control de mínimos',                   ph:'Buscar en almacén…'},
-  facturacion:{title:'Facturación',        sub:'Partes facturados y pendientes de facturar',                    ph:'Buscar factura o parte…'},
-  portal:     {title:'Portal de cliente',  sub:'Vista del cliente para crear y seguir sus tickets',             ph:'Buscar en el portal…'},
-  empresas:   {title:'Empresas',           sub:'Sociedades que facturan, cada una con su almacén y serie',      ph:'Buscar empresa…'},
-  agentes:    {title:'Agentes y permisos', sub:'Usuarios del sistema y su alcance',                             ph:'Buscar agente…'}
+  bandeja:    {title:'Bandeja única',      sub:'Todos los tickets y partes de trabajo, de todas las empresas', ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
+  cola:       {title:'Cola de entrada',    sub:'Tickets sin convertir, ordenados por vencimiento de SLA',       ph:'Buscar en la cola…',            btn:'+ Nuevo ticket',   act:'portal'},
+  partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'cola'},
+  clientes:   {title:'Clientes',           sub:'Empresas cliente y su actividad',                               ph:'Buscar cliente…',               btn:'+ Nuevo cliente',  act:'demo'},
+  articulos:  {title:'Artículos',          sub:'Catálogo de materiales y precios',                              ph:'Buscar artículo…',              btn:'+ Nuevo artículo', act:'demo'},
+  almacen:    {title:'Almacén',            sub:'Existencias por almacén y control de mínimos',                   ph:'Buscar en almacén…',            btn:'+ Nuevo movimiento', act:'demo'},
+  facturacion:{title:'Facturación',        sub:'Partes facturados y pendientes de facturar',                    ph:'Buscar factura o parte…',       btn:'+ Nueva factura',  act:'facturar'},
+  portal:     {title:'Portal de cliente',  sub:'Vista del cliente para crear y seguir sus tickets',             ph:'Buscar en el portal…',          btn:'+ Nuevo ticket',   act:'portal'},
+  empresas:   {title:'Empresas',           sub:'Sociedades que facturan, cada una con su almacén y serie',      ph:'Buscar empresa…',               btn:'+ Nueva empresa',  act:'demo'},
+  agentes:    {title:'Agentes y permisos', sub:'Usuarios del sistema y su alcance',                             ph:'Buscar agente…',                btn:'+ Nuevo agente',   act:'demo'}
 };
 
 /* ============================================================
@@ -733,6 +733,7 @@ function render(){
   id('viewTitle').textContent = VIEWS[current].title;
   id('viewSub').textContent = VIEWS[current].sub;
   id('search').placeholder = VIEWS[current].ph;
+  id('newbtn').textContent = VIEWS[current].btn;
   var pend = DB.tickets.filter(function(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }).length;
   id('cntCola').textContent = pend;
   id('cntPartes').textContent = DB.partes.length;
@@ -1007,7 +1008,22 @@ document.addEventListener('keydown', function(e){
   else if(id('drawer').classList.contains('show')) cerrarDrawer();
 });
 
-id('newbtn').addEventListener('click', function(){ show('portal'); toast('Crea el ticket desde el portal de cliente'); });
+id('newbtn').addEventListener('click', function(){
+  var v = VIEWS[current];
+  if(v.act==='portal'){ show('portal'); toast('Crea el ticket desde el portal de cliente'); return; }
+  if(v.act==='cola'){
+    show('cola');
+    toast('Un parte nace de un ticket: elige uno y pulsa «Convertir en parte»');
+    return;
+  }
+  if(v.act==='facturar'){
+    var pend = DB.partes.filter(function(p){ return p.estado==='Confirmado'; });
+    if(pend.length){ abrirParte(pend[0].ref); toast('Factura desde el parte, con la serie de su empresa'); }
+    else toast('No hay partes confirmados pendientes de facturar');
+    return;
+  }
+  toast('El alta de '+v.title.toLowerCase()+' llega en la versión final');
+});
 id('resetBtn').addEventListener('click', function(){ location.reload(); });
 
 var tt;
