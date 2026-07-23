@@ -542,6 +542,30 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 tbody tr.filaccion td:first-child{box-shadow:inset 3px 0 0 var(--warn);}
 tbody tr.corte td{border-top:2px solid var(--line);}
 
+/* ---------- Paginación ---------- */
+.pagbar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:12px; padding:0 2px;}
+.pgcount{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums;}
+.pgbtns{display:flex; align-items:center; gap:5px; margin-left:auto;}
+.pgb{font-size:12.5px; font-weight:600; font-family:inherit; color:var(--text); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:6px 11px; cursor:pointer;}
+.pgb:hover:not([disabled]){border-color:var(--gold); color:var(--gold-deep);}
+.pgb[disabled]{opacity:.4; cursor:not-allowed;}
+.pgnum{font-size:12.5px; font-weight:700; color:var(--ink); padding:0 8px; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.pgsize{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted);}
+.pgsize select{font-size:12.5px; font-family:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:5px 8px; cursor:pointer;}
+@media (max-width:700px){ .pgbtns{margin-left:0; width:100%;} }
+
+/* ---------- Portal: conversación plegable ---------- */
+.tkmore{display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; font-family:inherit; color:var(--gold-deep); background:none; border:none; padding:8px 0 0; cursor:pointer;}
+.tkmore:hover{text-decoration:underline;}
+.tkmore .chev{transition:transform .15s;}
+.tkmore[aria-expanded="true"] .chev{transform:rotate(90deg);}
+.tkthread{display:none;}
+.tkthread.open{display:block;}
+.tklast{font-size:12.5px; color:var(--text); background:var(--surface-2); border-left:2px solid var(--line); border-radius:0 8px 8px 0; padding:8px 11px; margin-top:10px; line-height:1.5;}
+.tklast b{color:var(--muted); font-weight:600; font-size:11px; display:block; margin-bottom:3px;}
+
+.psearch{width:100%; min-width:0; margin-bottom:14px;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -907,6 +931,35 @@ var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
 var modo='lista', filtroEstado='all';
 var pEmp='all', pEstado='all', pTecnico='all';
 var fSoloPend=false, aSoloBajos=false;
+/* Paginación: una página por vista y un tamaño común. */
+var porPagina = 10, pagina = {bandeja:1, partes:1, clientes:1, articulos:1, almacen:1, facturacion:1};
+function paginar(arr, vista){
+  var total = arr.length, paginas = Math.max(1, Math.ceil(total/porPagina));
+  if(pagina[vista] > paginas) pagina[vista] = paginas;
+  var p = pagina[vista], desde = (p-1)*porPagina;
+  return {items: arr.slice(desde, desde+porPagina), total:total, paginas:paginas, p:p, desde:desde};
+}
+function barraPag(pg, vista, etiqueta){
+  if(pg.total===0) return '';
+  var desde = pg.desde+1, hasta = Math.min(pg.desde+porPagina, pg.total);
+  var botones = '';
+  if(pg.paginas > 1){
+    botones = '<div class="pgbtns">'
+      + '<button class="pgb" data-pag="'+vista+':1" '+(pg.p===1?'disabled':'')+' aria-label="Primera">«</button>'
+      + '<button class="pgb" data-pag="'+vista+':'+(pg.p-1)+'" '+(pg.p===1?'disabled':'')+'>Anterior</button>'
+      + '<span class="pgnum">'+pg.p+' / '+pg.paginas+'</span>'
+      + '<button class="pgb" data-pag="'+vista+':'+(pg.p+1)+'" '+(pg.p===pg.paginas?'disabled':'')+'>Siguiente</button>'
+      + '<button class="pgb" data-pag="'+vista+':'+pg.paginas+'" '+(pg.p===pg.paginas?'disabled':'')+' aria-label="Última">»</button>'
+      + '</div>';
+  }
+  return '<div class="pagbar"><span class="pgcount">'+desde+'–'+hasta+' de '+pg.total+' '+etiqueta+'</span>'
+    + botones
+    + '<label class="pgsize">Por página'
+    +   '<select id="pgSize">'+[10,25,50,100].map(function(n){
+          return '<option value="'+n+'"'+(porPagina===n?' selected':'')+'>'+n+'</option>';
+        }).join('')+'</select></label>'
+    + '</div>';
+}
 var VIEWS = {
   bandeja:    {title:'Bandeja',             sub:'Avisos y partes de trabajo de todas las empresas',              ph:'Buscar aviso, parte o cliente…', btn:'+ Nuevo aviso',   act:'portal'},
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
@@ -962,6 +1015,9 @@ function gestion(t){
 }
 
 function sinConvertir(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }
+/* Solo se convierte en parte un aviso vivo: no tiene sentido facturar trabajo
+   sobre algo ya resuelto o cerrado. */
+function convertible(t){ return sinConvertir(t) && ['Resuelto','Cerrado'].indexOf(t.estado)===-1; }
 
 function vBandeja(){
   var kpiAccion   = DB.tickets.filter(requiereAccion).length;
@@ -1038,8 +1094,9 @@ function cuerpoLista(){
     var okT = filtroTipo==='all' || r.tipo===filtroTipo;
     return okE && okT && coincide(r.ref+' '+r.asunto+' '+r.cliente+' '+r.estado+' '+r.agente);
   });
-  var primeroSinAccion = fs.findIndex(function(r){ return !r.accion; });
-  var body = fs.map(function(r,i){
+  var pg = paginar(fs, 'bandeja');
+  var primeroSinAccion = pg.items.findIndex(function(r){ return !r.accion; });
+  var body = pg.items.map(function(r,i){
     var t = r.tipo==='ticket' ? ticketDe(r.ref) : null;
     var sla = t ? slaDe(t) : null;
     var cls = (r.accion?'filaccion ':'') + (i===primeroSinAccion && primeroSinAccion>0 ?'corte':'');
@@ -1054,17 +1111,17 @@ function cuerpoLista(){
       + '<td>'+(r.agente&&r.agente!=='Sin asignar'
           ? '<span class="who2"><span class="tavatar">'+ini(r.agente)+'</span>'+esc(r.agente)+'</span>'
           : '<span class="none">sin asignar</span>')+'</td>'
-      + '<td class="r">'+(t && sinConvertir(t)
+      + '<td class="r">'+(t && convertible(t)
           ? '<span class="rowact"><button class="tbtn solid" data-convert="'+r.ref+'">Convertir en parte</button></span>'
           : '')+'</td></tr>';
   }).join('');
 
-  return '<p class="rowcount">Mostrando '+fs.length+' de '+filas().length+' registros</p>'
-  + '<div class="card clickable"><div class="tablewrap"><table>'
+  return '<div class="card clickable"><div class="tablewrap"><table>'
   +   '<thead><tr><th>Fecha</th><th>Tipo</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa que factura</th><th>Estado</th><th>SLA</th><th>Agente</th><th class="r"></th></tr></thead>'
   +   '<tbody>'+body+'</tbody></table></div>'
-  +   (fs.length?'':'<div class="blank"><div class="ico">◦</div><b>Nada que mostrar con este filtro</b><span>Cambia la empresa, el tipo o limpia el buscador.</span></div>')
+  +   (fs.length?'':'<div class="blank"><div class="ico">◦</div><b>Nada que mostrar con este filtro</b><span>Cambia la empresa, el estado o limpia el buscador.</span></div>')
   + '</div>'
+  + barraPag(pg, 'bandeja', 'registros')
   + '<p class="cap">Los avisos no tienen empresa hasta que se convierten en parte. Al crear el parte se elige la empresa a mano — ese gesto fija quién factura, de qué almacén sale el material y con qué precio se valora.</p>';
 }
 
@@ -1148,7 +1205,8 @@ function vPartes(){
   +   '<span class="margin-chip'+(totalMargen<0?' neg':'')+'">margen '+eur(totalMargen)+'</span></div>'
   + '</div></div>';
 
-  var body = ps.map(function(p){
+  var pg = paginar(ps, 'partes');
+  var body = pg.items.map(function(p){
     var v = valorar(p);
     return '<tr data-open="parte:'+p.ref+'">'
       + '<td class="fch nowrap"'+(p.creado?' title="'+esc(haceQue(p.creado))+'"':'')+'>'+esc(p.creado?fechaHora(p.creado):p.fecha)+'</td>'
@@ -1166,12 +1224,14 @@ function vPartes(){
   + '<thead><tr><th>Fecha</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa</th><th>Estado</th><th>Técnico</th><th class="r">Tiempo</th><th class="r">Importe</th></tr></thead>'
   + '<tbody>'+body+'</tbody></table></div>'
   + (ps.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún parte coincide</b><span>Prueba con otro filtro, referencia o técnico.</span></div>')+'</div>'
+  + barraPag(pg, 'partes', 'partes')
   + '<p class="cap">Cada parte lleva su mano de obra (horas × precio/hora de coste y de venta) más los materiales del almacén. Pulsa un parte para ver y ajustar la valoración.</p>';
 }
 
 function vClientes(){
   var cs = DB.clientes.filter(function(c){ return coincide(c.nombre+' '+c.sector+' '+c.contacto); });
-  var body = cs.map(function(c){
+  var pg = paginar(cs, 'clientes');
+  var body = pg.items.map(function(c){
     var nt = DB.tickets.filter(function(t){return t.cliente===c.id;}).length;
     var np = DB.partes.filter(function(p){return p.cliente===c.id;}).length;
     var acc = DB.tickets.filter(function(t){ return t.cliente===c.id && requiereAccion(t); }).length;
@@ -1181,7 +1241,8 @@ function vClientes(){
   }).join('');
   return '<div class="card clickable"><div class="tablewrap"><table>'
   + '<thead><tr><th>Cliente</th><th>Sector</th><th>Contacto</th><th class="r">Avisos</th><th class="r">Partes</th><th>Factura habitual</th></tr></thead>'
-  + '<tbody>'+body+'</tbody></table></div>'+(cs.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún cliente coincide</b><span>Prueba con otro nombre, sector o correo.</span></div>')+'</div>';
+  + '<tbody>'+body+'</tbody></table></div>'+(cs.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún cliente coincide</b><span>Prueba con otro nombre, sector o correo.</span></div>')+'</div>'
+  + barraPag(pg, 'clientes', 'clientes');
 }
 
 function vArticulos(){
@@ -1196,6 +1257,7 @@ function vArticulos(){
   return '<div class="card"><div class="tablewrap"><table>'
   + '<thead><tr><th>Código</th><th>Artículo</th><th>Categoría</th><th>Almacén</th><th class="r">Stock</th><th class="r">PVP</th></tr></thead>'
   + '<tbody>'+body+'</tbody></table></div>'+(as.length?'':'<div class="blank"><div class="ico">◦</div><b>Ningún artículo coincide</b><span>Prueba con otro código, nombre o categoría.</span></div>')+'</div>'
+  + barraPag(pg, 'articulos', 'artículos')
   + '<p class="cap">El stock baja automáticamente al confirmar un parte que consume material de ese almacén.</p>';
 }
 
@@ -1220,7 +1282,8 @@ function vAlmacen(){
   + '</div></div></div>'
   + '<div class="card"><div class="tablewrap"><table>'
   + '<thead><tr><th>Artículo</th><th>Almacén</th><th class="r">Stock</th><th class="r">Mínimo</th><th>Estado</th></tr></thead>'
-  + '<tbody>'+body+'</tbody></table></div>'+(as.length?'':'<div class="blank"><div class="ico">◦</div><b>Sin existencias que mostrar</b><span>Prueba con otro artículo.</span></div>')+'</div>';
+  + '<tbody>'+body+'</tbody></table></div>'+(as.length?'':'<div class="blank"><div class="ico">◦</div><b>Sin existencias que mostrar</b><span>Prueba con otro artículo.</span></div>')+'</div>'
+  + barraPag(pg, 'almacen', 'artículos');
 }
 
 function vFacturacion(){
@@ -1229,7 +1292,8 @@ function vFacturacion(){
   var rows = todas
     .filter(function(p){ return !fSoloPend || !facturaDe(p.ref); })
     .filter(function(p){ var f=facturaDe(p.ref); return coincide(p.ref+' '+cliDe(p.cliente).nombre+' '+(f?f.doc:'')); });
-  var body = rows.map(function(p){
+  var pg = paginar(rows, 'facturacion');
+  var body = pg.items.map(function(p){
     var f = facturaDe(p.ref), v = valorar(p);
     return '<tr data-open="parte:'+p.ref+'">'
       + '<td>'+(f?'<span class="ref">'+esc(f.doc)+'</span>':'<span class="none">— pendiente —</span>')+'</td>'
@@ -1304,6 +1368,7 @@ function vAgentes(){
 }
 
 var portalCli = 'marina', portalDentro = false;
+var portalAbiertos = {}, portalHistorico = false, portalQ = '';
 
 function vPortal(){ return ''; }
 
@@ -1348,30 +1413,61 @@ function pintarPortal(){
   var curso = mios.filter(function(t){ return gestion(t).k==='encurso'; }).length;
   var listos = mios.filter(function(t){ return gestion(t).k==='listo'; }).length;
 
-  var lista = mios.length ? mios.map(function(t){
+  function tarjeta(t){
     var s2 = slaDe(t), g = gestion(t);
     var objetivo = SLA_HORAS[t.prio]*3600*1000;
     var pct = Math.max(0, Math.min(100, Math.round((Date.now()-t.creado.getTime())/objetivo*100)));
     var visibles = (t.msgs||[]).filter(function(x){ return x.de!=='nota'; });
+    var ultimo = visibles.filter(function(x){ return x.de!=='sistema'; }).slice(-1)[0];
+    var abierto = !!portalAbiertos[t.ref];
     return '<div class="tk">'
       + '<div class="l1"><span class="ti">'+esc(t.asunto)+'</span><span class="r">'+esc(t.ref)+'</span></div>'
       + '<div class="meta">'+esc(t.area)+' · abierto '+fechaHora(t.creado)+' ('+haceQue(t.creado)+')</div>'
       + '<div class="tkbar '+s2.clase+'"><span style="width:'+pct+'%"></span></div>'
       + '<div class="l2">'+chipEstado(t.estado)
       +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span></div>'
+      + (ultimo && !abierto
+          ? '<div class="tklast"><b>'+(ultimo.de==='cliente'?'Tú':'Asistencia técnica')+' · '+selloMsg(ultimo.t)+'</b>'+esc(ultimo.txt)+'</div>'
+          : '')
       + (g.k==='espera'
           ? '<div class="reply" style="margin-top:11px"><textarea id="resp-'+t.ref+'" placeholder="Escribe tu respuesta al técnico…" aria-label="Responder"></textarea>'
             + '<div class="rowbtn"><button class="tbtn solid" data-resp="'+t.ref+'">Responder</button></div></div>'
           : '')
-      + (visibles.length
-          ? '<div class="thread" style="margin-top:11px">'+visibles.map(function(x){
-              if(x.de==='sistema') return '<div class="msg sistema">'+esc(x.txt)+'</div>';
-              var quien = x.de==='cliente' ? 'Tú' : 'Asistencia técnica';
-              return '<div class="msg '+x.de+'"><div class="from"><span>'+esc(quien)+'</span><time>'+selloMsg(x.t)+'</time></div>'+esc(x.txt)+'</div>';
-            }).join('')+'</div>'
+      + (visibles.length > 1
+          ? '<button class="tkmore" data-hilo="'+t.ref+'" aria-expanded="'+abierto+'">'
+            + '<span class="chev">›</span>'+(abierto?'Ocultar conversación':'Ver conversación ('+visibles.length+' mensajes)')+'</button>'
           : '')
-      + '</div>';
-  }).join('') : '<div class="blank"><div class="ico">◦</div><b>Aún no has abierto ningún aviso</b><span>Rellena el formulario y aparecerá aquí con su plazo de respuesta.</span></div>';
+      + '<div class="tkthread'+(abierto?' open':'')+'">'
+      +   (visibles.length
+            ? '<div class="thread" style="margin-top:11px">'+visibles.map(function(x){
+                if(x.de==='sistema') return '<div class="msg sistema">'+esc(x.txt)+'</div>';
+                var quien = x.de==='cliente' ? 'Tú' : 'Asistencia técnica';
+                return '<div class="msg '+x.de+'"><div class="from"><span>'+esc(quien)+'</span><time>'+selloMsg(x.t)+'</time></div>'+esc(x.txt)+'</div>';
+              }).join('')+'</div>'
+            : '')
+      + '</div></div>';
+  }
+
+  function coincideAviso(t){
+    if(!portalQ) return true;
+    var txt = (t.ref+' '+t.asunto+' '+t.area+' '+t.estado+' '
+             + (t.msgs||[]).filter(function(m){return m.de!=='nota';}).map(function(m){return m.txt;}).join(' ')).toLowerCase();
+    return txt.indexOf(portalQ)>-1;
+  }
+  mios = mios.filter(coincideAviso);
+
+  var activos = mios.filter(function(t){ return ['Resuelto','Cerrado'].indexOf(t.estado)===-1; })
+                    .sort(function(a,b){ return b.creado - a.creado; });
+  var cerrados = mios.filter(function(t){ return ['Resuelto','Cerrado'].indexOf(t.estado)>-1; })
+                     .sort(function(a,b){ return b.creado - a.creado; });
+
+  var lista = activos.length ? activos.map(tarjeta).join('')
+    : '<div class="blank"><div class="ico">✓</div><b>No tienes avisos en curso</b><span>Cuando abras uno aparecerá aquí con su plazo de respuesta.</span></div>';
+  if(cerrados.length){
+    lista += '<button class="tkmore" data-hist="1" aria-expanded="'+portalHistorico+'" style="margin-top:14px">'
+           + '<span class="chev">›</span>'+(portalHistorico?'Ocultar':'Ver')+' avisos cerrados ('+cerrados.length+')</button>'
+           + '<div class="tkthread'+(portalHistorico?' open':'')+'">'+cerrados.map(tarjeta).join('')+'</div>';
+  }
 
   var prios = ['Baja','Media','Alta'].map(function(x){
     return '<label class="p-'+x+'"><input type="radio" name="pPrio" value="'+x+'"'+(x==='Media'?' checked':'')+'><span>'+x+'</span></label>';
@@ -1411,7 +1507,12 @@ function pintarPortal(){
   +       '<textarea id="pDesc" placeholder="Cuándo empezó, si es intermitente, si afecta a más zonas…"></textarea>'
   +       '<button class="newbtn" id="portalSend" style="margin-top:16px;width:100%">Enviar aviso</button>'
   +     '</div>'
-  +     '<div class="pcard"><h4>Mis avisos</h4><div class="h4s">Estado y plazo de cada solicitud.</div>'+lista+'</div>'
+  +     '<div class="pcard"><h4>Mis avisos</h4><div class="h4s">Estado y plazo de cada solicitud.</div>'
+  +       '<input class="search psearch" id="pQ" type="text" placeholder="Buscar en mis avisos…" value="'+esc(portalQ)+'" autocomplete="off" aria-label="Buscar en mis avisos">'
+  +       (portalQ && !activos.length && !cerrados.length
+          ? '<div class="blank"><div class="ico">◦</div><b>Ningún aviso coincide</b><span>Prueba con otra palabra o borra la búsqueda.</span></div>'
+          : lista)
+  +     '</div>'
   +   '</div>'
   + '</div>';
   pintarHint();
@@ -1500,7 +1601,9 @@ function abrirTicket(ref){
     + '<div class="dsec">Acciones</div>'
     + (yaTiene
         ? '<button class="dbtn" disabled>Ya convertido en parte</button>'
-        : '<button class="dbtn" data-convert="'+t.ref+'">Convertir en parte de trabajo</button>');
+        : (convertible(t)
+            ? '<button class="dbtn" data-convert="'+t.ref+'">Convertir en parte de trabajo</button>'
+            : '<button class="dbtn" disabled>El aviso está '+esc(t.estado.toLowerCase())+'</button>'));
   pintarHilo(t);
   abrirDrawer();
 }
@@ -1686,13 +1789,16 @@ var modalTicket = null, modalEmp = null, modalTipo = 'parte';
 
 function abrirModal(ref){
   var t = ticketDe(ref); if(!t) return;
+  if(!convertible(t)){ toast('El aviso está '+t.estado.toLowerCase()+': reábrelo para poder convertirlo'); return; }
   modalTipo = 'parte';
   id('mTitle').textContent = 'Convertir en parte de trabajo';
   id('mOk').textContent = 'Crear parte';
   modalTicket = ref;
   modalEmp = cliDe(t.cliente).habitual;
   if(!puedeVer(modalEmp)) modalEmp = misEmpresas()[0];
-  id('mSub').innerHTML = 'El aviso <b>'+esc(t.ref)+'</b> no tiene empresa. La que elijas aquí fija <b>quién factura</b>, <b>de qué almacén</b> sale el material y <b>con qué tarifa</b> se valora el parte.';
+  var mias = DB.empresas.filter(function(e){ return puedeVer(e.id); });
+  id('mSub').innerHTML = 'El aviso <b>'+esc(t.ref)+'</b> no tiene empresa. La que elijas aquí fija <b>quién factura</b>, <b>de qué almacén</b> sale el material y <b>con qué tarifa</b> se valora el parte.'
+    + (mias.length===1 ? '<br><br>Solo tienes acceso a <b>'+esc(mias[0].nombre)+'</b>.' : '');
   id('mBody').innerHTML = DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
     return '<button class="empopt'+(e.id===modalEmp?' on':'')+'" data-pick="'+e.id+'">'
       + '<i style="background:'+e.color+'"></i><span><b>'+esc(e.nombre)+'</b><br><span style="font-size:11.5px;color:var(--muted)">'+esc(e.almacen)+' · serie '+esc(e.serie)+'</span></span>'
@@ -1802,7 +1908,7 @@ function crearParte(){
 id('nav').addEventListener('click', function(e){
   var b = e.target.closest('.item'); if(b) show(b.getAttribute('data-view'));
 });
-id('search').addEventListener('input', function(e){ q = e.target.value.trim().toLowerCase(); render(); });
+id('search').addEventListener('input', function(e){ q = e.target.value.trim().toLowerCase(); Object.keys(pagina).forEach(function(k){ pagina[k]=1; }); render(); });
 
 /* Portal: al cambiar de cliente se recarga su lista de tickets */
 function prioSel(){
@@ -1819,6 +1925,14 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
+  var pb = e.target.closest('[data-pag]');
+  if(pb && !pb.disabled){
+    var d = pb.getAttribute('data-pag').split(':');
+    pagina[d[0]] = parseInt(d[1],10);
+    render();
+    var t = document.querySelector('.main'); if(t) t.scrollIntoView({block:'start'});
+    return;
+  }
   var kb = e.target.closest('[data-kpi]');
   if(kb){
     var k = kb.getAttribute('data-kpi');
@@ -1873,9 +1987,22 @@ id('viewRoot').addEventListener('change', function(e){
   if(e.target.id==='pSelTec'){ pTecnico = e.target.value; render(); return; }
   if(e.target.id==='fSel'){ fSoloPend = e.target.value==='pend'; render(); return; }
   if(e.target.id==='aSel'){ aSoloBajos = e.target.value==='bajos'; render(); return; }
+  if(e.target.id==='pgSize'){
+    porPagina = parseInt(e.target.value,10);
+    Object.keys(pagina).forEach(function(k){ pagina[k]=1; });
+    render(); return;
+  }
 });
 id('portalWrap').addEventListener('submit', function(e){
   if(e.target.id==='loginForm'){ e.preventDefault(); entrarPortal(id('lgMail').value); }
+});
+id('portalWrap').addEventListener('input', function(e){
+  if(e.target.id!=='pQ') return;
+  portalQ = e.target.value.trim().toLowerCase();
+  var pos = e.target.selectionStart;
+  pintarPortal();
+  var campo = id('pQ');
+  if(campo){ campo.focus(); campo.setSelectionRange(pos,pos); }
 });
 id('portalWrap').addEventListener('change', function(e){
   if(e.target.name==='pPrio') pintarHint();
@@ -1896,7 +2023,14 @@ id('portalWrap').addEventListener('click', function(e){
     toast('Respuesta enviada · el equipo la verá en su bandeja');
     pintarPortal(); render(); return;
   }
-  if(e.target.id==='portalLogout'){ portalDentro=false; pintarLogin(); toast('Sesión cerrada'); return; }
+  var hilo = e.target.closest('[data-hilo]');
+  if(hilo){
+    var rf = hilo.getAttribute('data-hilo');
+    portalAbiertos[rf] = !portalAbiertos[rf];
+    pintarPortal(); return;
+  }
+  if(e.target.closest('[data-hist]')){ portalHistorico = !portalHistorico; pintarPortal(); return; }
+  if(e.target.id==='portalLogout'){ portalDentro=false; portalQ=''; portalAbiertos={}; portalHistorico=false; pintarLogin(); toast('Sesión cerrada'); return; }
   var chip = e.target.closest('[data-mail]');
   if(chip){ id('lgMail').value = chip.getAttribute('data-mail'); entrarPortal(chip.getAttribute('data-mail')); return; }
   if(e.target.id==='lgBtn'){ e.preventDefault(); entrarPortal(id('lgMail').value); return; }
