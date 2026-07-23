@@ -58,17 +58,17 @@ body{
 /* ---------- Sidebar ---------- */
 .side{
   width:242px; flex-shrink:0; background:var(--sidebar); color:var(--side-txt);
-  padding:20px 16px; display:flex; flex-direction:column; position:sticky; top:0;
+  padding:34px 16px 20px; display:flex; flex-direction:column; position:sticky; top:0;
   height:100vh; overflow-y:auto;
 }
-.brand{display:flex; align-items:center; gap:11px; padding:4px 6px;}
+.brand{display:flex; align-items:center; gap:11px; padding:0 6px 4px;}
 .logo{
   width:40px; height:40px; border-radius:11px; background:#0a0b0d; object-fit:cover;
   box-shadow:0 6px 16px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.18);
 }
 .brandtxt b{display:block; font-size:var(--step-2); font-weight:800; color:#fff; letter-spacing:-.2px; line-height:1.1;}
 .brandtxt span{font-size:9.5px; color:var(--side-dim); letter-spacing:.4px;}
-.brandrule{height:1px; background:linear-gradient(90deg,var(--gold) 0%,rgba(120,132,148,.25) 70%,transparent 100%); margin:14px 6px 12px;}
+.brandrule{height:1px; background:linear-gradient(90deg,var(--gold) 0%,rgba(120,132,148,.25) 70%,transparent 100%); margin:22px 6px 16px;}
 .nav{display:flex; flex-direction:column; gap:2px; flex:1;}
 .item{
   display:flex; align-items:center; gap:12px; font-size:14px; color:var(--side-txt);
@@ -458,12 +458,6 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .pswitch{margin-bottom:18px;}
 .pnote{display:flex; gap:10px; align-items:flex-start; background:var(--warn-bg); color:var(--warn); border-radius:10px; padding:11px 14px; font-size:12.5px; line-height:1.55; margin-bottom:16px;}
 .pnote b{color:inherit;}
-.tk.pending{border-left:3px solid var(--warn);}
-.tk.done{border-left:3px solid var(--ok);}
-.tkstate{font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:20px; display:inline-block;}
-.tkstate.esperando{background:var(--warn-bg); color:var(--warn);}
-.tkstate.encurso{background:var(--ticket-bg); color:var(--ticket);}
-.tkstate.listo{background:var(--ok-bg); color:var(--ok);}
 @media (max-width:620px){ .phero h2{font-size:21px;} .phero .cnts{gap:18px;} }
 
 /* ---------- KPI accionable y aviso sin gestionar ---------- */
@@ -471,9 +465,21 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .kpiact:hover{border-color:var(--muted);}
 .kpiact.on{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
 .kpiact.on::before{background:var(--gold);}
-tbody tr.sinGest td:first-child{box-shadow:inset 3px 0 0 var(--warn);}
 .item .cnt.alerta{background:var(--warn); color:#0d1117;}
 .item.on .cnt.alerta{background:rgba(255,255,255,.28); color:var(--on-accent);}
+
+/* ---------- Barra de filtros en dos niveles ---------- */
+.filterbar{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+.frow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.frow.between{justify-content:space-between; margin-top:2px;}
+.frow .fllabel{font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); min-width:62px;}
+@media (max-width:700px){ .frow .fllabel{min-width:0; width:100%;} .frow.between{gap:10px;} }
+
+/* ---------- Columnas que requieren acción ---------- */
+.col.accion{border-color:var(--warn);}
+.col.accion .colh{background:var(--warn-bg);}
+.colh .doing{font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--warn); background:var(--surface); border:1px solid currentColor; border-radius:20px; padding:1px 7px;}
+.board{grid-template-columns:repeat(5,minmax(210px,1fr));}
 
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -484,7 +490,7 @@ tbody tr.sinGest td:first-child{box-shadow:inset 3px 0 0 var(--warn);}
 
 @media (max-width:820px){
   .app{flex-direction:column;}
-  .side{width:100%; height:auto; position:static; flex-direction:column;}
+  .side{width:100%; height:auto; position:static; flex-direction:column; padding:20px 16px;}
   .nav{flex-direction:row; flex-wrap:wrap; gap:4px;}
   .item{width:auto;}
   .sec{display:none;}
@@ -628,6 +634,11 @@ var DB = {
       {de:'cliente', txt:'Van tres veces esta semana, siempre cuando llueve fuerte.', t:hAgo(2.5)},
       {de:'agente', txt:'Suena a humedad en una caja de derivación. Vamos mañana a primera hora.', t:hAgo(1.9)}
     ]},
+    {ref:'TCK-105', asunto:'Ruido en la enfriadora de cubierta', cliente:'olivos', prio:'Media', estado:'Esperando al cliente', agente:'Marc', creado:hAgo(9), desc:'Ruido metálico intermitente en la unidad de cubierta.', area:'Cubierta', msgs:[
+      {de:'cliente', txt:'Se oye un ruido metálico por las noches, molesta a los vecinos del ático.', t:hAgo(9)},
+      {de:'agente', txt:'Para subir a cubierta necesitamos que el administrador nos autorice el acceso. ¿Podéis confirmarlo?', t:hAgo(7.5)},
+      {de:'sistema', txt:'El aviso queda en pausa a la espera del cliente', t:hAgo(7.5)}
+    ]},
     {ref:'TCK-106', asunto:'Presupuesto: nueva instalación de frío', cliente:'horno', prio:'Alta', estado:'Abierto', agente:'Pedro', creado:hAgo(6.4),  desc:'Quieren presupuesto para cámara de frío en el obrador.', area:'Obrador', msgs:[
       {de:'cliente', txt:'Necesitamos el presupuesto antes de fin de mes para pedir la subvención.', t:hAgo(6.4)}
     ]}
@@ -657,7 +668,11 @@ function misEmpresas(){
 function puedeVer(empId){ return !empId || misEmpresas().indexOf(empId)>-1; }
 function esAdmin(){ return yo().rol==='Administrador'; }
 
-var ESTADOS_TICKET = ['Abierto','En curso','Resuelto','Cerrado'];
+var ESTADOS_TICKET = ['Abierto','En curso','Esperando al cliente','Resuelto','Cerrado'];
+/* Estados que exigen acción del equipo. El resto espera a otro o ya está hecho. */
+var ESTADOS_ACCION = ['Abierto','En curso'];
+function requiereAccion(t){ return ESTADOS_ACCION.indexOf(t.estado)>-1; }
+function esperaCliente(t){ return t.estado==='Esperando al cliente'; }
 function hora(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function selloMsg(d){
   var hoy = new Date();
@@ -679,6 +694,7 @@ var seqTicket = 109, seqParte = 55, seqFactura = {vega:12, climatiza:8, electros
    ============================================================ */
 function slaDe(t){
   if(t.estado==='Resuelto'||t.estado==='Cerrado') return {clase:'none', txt:'—', restante:Infinity};
+  if(t.estado==='Esperando al cliente') return {clase:'none', txt:'En pausa', restante:Infinity};
   var objetivo = SLA_HORAS[t.prio]*3600*1000;
   var limite = t.creado.getTime() + objetivo;
   var restante = limite - Date.now();
@@ -721,6 +737,7 @@ function fechaCorta(d){
 }
 var COLOR_ESTADO = {
   'Abierto':'var(--danger)','En curso':'var(--warn)','Resuelto':'var(--ok)','Cerrado':'var(--neutral)',
+  'Esperando al cliente':'var(--ticket)',
   'Borrador':'var(--neutral)','Confirmado':'var(--vega)','Facturado':'var(--ok)'
 };
 function chipEmpresa(empId){
@@ -736,7 +753,7 @@ function chipEstado(est){
    ESTADO DE LA VISTA
    ============================================================ */
 var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
-var modo='lista', soloPend=false;
+var modo='lista', filtroEstado='all';
 var VIEWS = {
   bandeja:    {title:'Bandeja',             sub:'Avisos y partes de trabajo de todas las empresas',              ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
@@ -774,44 +791,63 @@ function coincide(txt){ return q==='' || txt.toLowerCase().indexOf(q)>-1; }
    ============================================================ */
 /* Cómo va el aviso, en lenguaje del cliente. */
 function gestion(t){
-  if(t.estado==='Cerrado')  return {k:'listo', txt:'Cerrado', pend:false};
-  if(t.estado==='Resuelto') return {k:'listo', txt:'Resuelto', pend:false};
-  var tieneParte = DB.partes.some(function(p){return p.ticket===t.ref;});
-  if(tieneParte)            return {k:'encurso', txt:'Técnico asignado', pend:false};
-  var respondido = (t.msgs||[]).some(function(m){ return m.de==='agente'; });
-  if(respondido)            return {k:'encurso', txt:'En gestión', pend:false};
-  return {k:'esperando', txt:'Pendiente de gestionar', pend:true};
+  if(t.estado==='Cerrado')  return {k:'listo',   txt:'Cerrado',  pend:false};
+  if(t.estado==='Resuelto') return {k:'listo',   txt:'Resuelto', pend:false};
+  if(esperaCliente(t))      return {k:'espera',  txt:'Esperando tu respuesta', pend:false};
+  if(t.estado==='En curso') return {k:'encurso', txt:'En curso', pend:false};
+  return {k:'esperando', txt:'Abierto', pend:true};
 }
 
 function sinConvertir(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }
 
 function vBandeja(){
-  var kpiSinGest  = DB.tickets.filter(function(t){ return gestion(t).pend; }).length;
+  var kpiAccion   = DB.tickets.filter(requiereAccion).length;
+  var kpiEspera   = DB.tickets.filter(esperaCliente).length;
   var kpiAbiertos = DB.tickets.filter(function(t){return t.estado==='Abierto'||t.estado==='En curso';}).length;
   var kpiBorrador = DB.partes.filter(function(p){return puedeVer(p.emp) && p.estado==='Borrador';}).length;
   var kpiPend     = DB.partes.filter(function(p){return puedeVer(p.emp) && p.estado==='Confirmado';}).length;
   var kpiStock    = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock < a.min;}).length;
-  var pendientes  = kpiSinGest;
 
   var pills = DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
     return '<button class="pill'+(filtroEmp===e.id?' on':'')+'" data-emp="'+e.id+'"><i style="background:'+e.color+'"></i>'+esc(e.nombre)+'</button>';
   }).join('');
 
+  var porEstado = {};
+  ESTADOS_TICKET.forEach(function(e){
+    porEstado[e] = DB.tickets.filter(function(t){ return t.estado===e; }).length;
+  });
+
+  var pillsEmp = DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
+    return '<button class="pill'+(filtroEmp===e.id?' on':'')+'" data-emp="'+e.id+'"><i style="background:'+e.color+'"></i>'+esc(e.nombre)+'</button>';
+  }).join('');
+
+  var pillsEst = ESTADOS_TICKET.map(function(e){
+    return '<button class="pill'+(filtroEstado===e?' on':'')+'" data-estf="'+e+'">'
+      + '<i style="background:'+COLOR_ESTADO[e]+'"></i>'+e
+      + (porEstado[e]?' · '+porEstado[e]:'')+'</button>';
+  }).join('');
+
   var cabecera = ''
   + '<div class="kpis">'
-  +   '<button class="kpi kpiact'+(kpiSinGest?' k-amber':'')+(soloPend?' on':'')+'" data-pend="1">'
-  +     '<div class="n">'+kpiSinGest+'</div><div class="l">Avisos <b>sin gestionar</b></div></button>'
-  +   '<div class="kpi"><div class="n">'+kpiAbiertos+'</div><div class="l"><b>Avisos</b> abiertos</div></div>'
+  +   '<button class="kpi kpiact'+(kpiAccion?' k-amber':'')+(filtroEstado==='accion'?' on':'')+'" data-estf="accion">'
+  +     '<div class="n">'+kpiAccion+'</div><div class="l">Avisos <b>que requieren acción</b></div></button>'
+  +   '<div class="kpi"><div class="n">'+kpiEspera+'</div><div class="l">Esperando al <b>cliente</b></div></div>'
   +   '<div class="kpi k-green"><div class="n">'+kpiPend+'</div><div class="l">Partes <b>pend. de facturar</b></div></div>'
   +   '<div class="kpi k-red"><div class="n">'+kpiStock+'</div><div class="l">Stock <b>bajo mínimos</b></div></div>'
   + '</div>'
-  + '<div class="filters">'
-  +   '<div class="fl" id="empFilter"><span class="fllabel">Empresa:</span>'
-  +     '<button class="pill'+(filtroEmp==='all'?' on':'')+'" data-emp="all">Todas</button>'+pills
-  +     '<button class="pill'+(soloPend?' on':'')+'" data-pend="1" style="margin-left:6px">Sin gestionar'
-  +       (pendientes?' · '+pendientes:'')+'</button>'
+  + '<div class="filterbar">'
+  +   '<div class="frow" id="empFilter">'
+  +     '<span class="fllabel">Empresa</span>'
+  +     '<button class="pill'+(filtroEmp==='all'?' on':'')+'" data-emp="all">Todas</button>'+pillsEmp
   +   '</div>'
-  +   '<div class="fl">'
+  +   '<div class="frow" id="estFilter">'
+  +     '<span class="fllabel">Estado</span>'
+  +     '<button class="pill'+(filtroEstado==='all'?' on':'')+'" data-estf="all">Todos</button>'
+  +     '<button class="pill'+(filtroEstado==='accion'?' on':'')+'" data-estf="accion" style="font-weight:700">'
+  +       '<i style="background:var(--warn)"></i>Requieren acción'+(kpiAccion?' · '+kpiAccion:'')+'</button>'
+  +     '<span style="width:1px;height:20px;background:var(--line);margin:0 3px"></span>'+pillsEst
+  +   '</div>'
+  +   '<div class="frow between">'
   +     '<div class="toggle" id="typeToggle">'
   +       '<button data-type="all" class="'+(filtroTipo==='all'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Todo</button>'
   +       '<button data-type="ticket" class="'+(filtroTipo==='ticket'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Avisos</button>'
@@ -830,12 +866,16 @@ function vBandeja(){
 function cuerpoLista(){
   var fs = filas().filter(function(r){
     if(!puedeVer(r.emp)) return false;
-    if(soloPend && !(r.tipo==='ticket' && gestion(ticketDe(r.ref)).pend)) return false;
+    if(filtroEstado!=='all'){
+      if(r.tipo!=='ticket') return false;
+      var tk = ticketDe(r.ref);
+      if(filtroEstado==='accion' ? !requiereAccion(tk) : tk.estado!==filtroEstado) return false;
+    }
     var okE = filtroEmp==='all' || r.emp===filtroEmp;
     var okT = filtroTipo==='all' || r.tipo===filtroTipo;
     return okE && okT && coincide(r.ref+' '+r.asunto+' '+r.cliente+' '+r.estado+' '+r.agente);
   });
-  if(soloPend) fs.sort(function(a,b){
+  if(filtroEstado!=='all') fs.sort(function(a,b){
     var ta=ticketDe(a.ref), tb=ticketDe(b.ref);
     return (ta?slaDe(ta).restante:Infinity) - (tb?slaDe(tb).restante:Infinity);
   });
@@ -843,12 +883,12 @@ function cuerpoLista(){
   var body = fs.map(function(r){
     var t = r.tipo==='ticket' ? ticketDe(r.ref) : null;
     var sla = t ? slaDe(t) : null;
-    return '<tr data-open="'+r.tipo+':'+r.ref+'"'+(t&&gestion(t).pend?' class="sinGest"':'')+'>'
+    return '<tr data-open="'+r.tipo+':'+r.ref+'">'
       + '<td><span class="tip '+r.tipo+'">'+(r.tipo==='ticket'?'<span class="d"></span>Aviso':'&#9656; Parte')+'</span></td>'
       + '<td class="ref">'+esc(r.ref)+'</td>'
       + '<td><div class="as">'+esc(r.asunto)+(t&&sinLeer(t)?'<span class="unread" title="Esperando respuesta">1</span>':'')+'</div><div class="cl">'+esc(r.cliente)+'</div></td>'
       + '<td>'+chipEmpresa(r.emp)+'</td>'
-      + '<td>'+chipEstado(r.estado)+(t&&gestion(t).pend?' <span class="tkstate esperando" style="margin-left:4px">Sin gestionar</span>':'')+'</td>'
+      + '<td>'+chipEstado(r.estado)+'</td>'
       + '<td>'+(sla ? '<span class="sla sla-'+sla.clase+'">'+esc(sla.txt)+'</span>' : '<span class="none">—</span>')+'</td>'
       + '<td>'+esc(r.agente)+'</td>'
       + '<td class="r">'+(t && sinConvertir(t)
@@ -867,7 +907,6 @@ function cuerpoLista(){
 
 function cuerpoTablero(){
   var ts = DB.tickets.filter(function(t){
-    if(soloPend && !gestion(t).pend) return false;
     return coincide(t.ref+' '+t.asunto+' '+cliDe(t.cliente).nombre+' '+t.agente);
   });
   var cols = ESTADOS_TICKET.map(function(est){
@@ -886,8 +925,10 @@ function cuerpoTablero(){
         +   '<span class="kag">'+esc(t.agente)+'</span></div>'
         + '</article>';
     }).join('');
-    return '<section class="col" data-col="'+est+'">'
-      + '<div class="colh"><i style="background:'+COLOR_ESTADO[est]+'"></i><b>'+est+'</b><span class="n">'+enCol.length+'</span></div>'
+    var accion = ESTADOS_ACCION.indexOf(est)>-1;
+    return '<section class="col'+(accion?' accion':'')+'" data-col="'+est+'">'
+      + '<div class="colh"><i style="background:'+COLOR_ESTADO[est]+'"></i><b>'+est+'</b>'
+      +   (accion?'<span class="doing">acción</span>':'')+'<span class="n">'+enCol.length+'</span></div>'
       + '<div class="colb">'+(cards || '<div class="colempty">Nada aquí</div>')+'</div>'
       + '</section>';
   }).join('');
@@ -1050,11 +1091,11 @@ function pintarPortal(){
     var objetivo = SLA_HORAS[t.prio]*3600*1000;
     var pct = Math.max(0, Math.min(100, Math.round((Date.now()-t.creado.getTime())/objetivo*100)));
     var visibles = (t.msgs||[]).filter(function(x){ return x.de!=='nota'; });
-    return '<div class="tk '+(g.pend?'pending':(g.k==='listo'?'done':''))+'">'
+    return '<div class="tk">'
       + '<div class="l1"><span class="ti">'+esc(t.asunto)+'</span><span class="r">'+esc(t.ref)+'</span></div>'
       + '<div class="meta">'+esc(t.area)+' · abierto el '+fechaCorta(t.creado)+'</div>'
       + '<div class="tkbar '+s2.clase+'"><span style="width:'+pct+'%"></span></div>'
-      + '<div class="l2"><span class="tkstate '+g.k+'">'+esc(g.txt)+'</span>'
+      + '<div class="l2">'+chipEstado(t.estado)
       +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span></div>'
       + (visibles.length
           ? '<div class="thread" style="margin-top:11px">'+visibles.map(function(x){
@@ -1081,14 +1122,14 @@ function pintarPortal(){
   +   '<h2>Hola, '+esc(c.nombre)+'</h2>'
   +   '<p>Abre un aviso y te decimos al momento en cuánto tiempo respondemos. Aquí puedes seguir el estado de todos tus avisos y hablar con el técnico.</p>'
   +   '<div class="cnts">'
-  +     '<div class="c'+(pend.length?' pend':'')+'"><b>'+pend.length+'</b><span>pendientes de gestionar</span></div>'
-  +     '<div class="c"><b>'+curso+'</b><span>en gestión</span></div>'
+  +     '<div class="c'+(pend.length?' pend':'')+'"><b>'+pend.length+'</b><span>sin atender</span></div>'
+  +     '<div class="c"><b>'+curso+'</b><span>en curso</span></div>'
   +     '<div class="c"><b>'+listos+'</b><span>resueltos</span></div>'
   +   '</div>'
   + '</div></section>'
   + '<div class="pbody">'
   +   (pend.length
-      ? '<div class="pnote"><span>●</span><span><b>'+pend.length+' aviso'+(pend.length===1?'':'s')+' pendiente'+(pend.length===1?'':'s')+' de gestionar.</b> Nadie los ha atendido todavía; los verás cambiar de estado en cuanto el equipo los recoja.</span></div>'
+      ? '<div class="pnote"><span>●</span><span><b>'+pend.length+' aviso'+(pend.length===1?'':'s')+' sin atender.</b> Pasarán a «En curso» en cuanto el equipo los recoja.</span></div>'
       : '')
   +   '<div class="pgrid">'
   +     '<div class="pcard pform">'
@@ -1122,7 +1163,7 @@ function render(){
   id('viewSub').textContent = VIEWS[current].sub;
   id('search').placeholder = VIEWS[current].ph;
   id('newbtn').textContent = VIEWS[current].btn;
-  var pend = DB.tickets.filter(function(t){ return gestion(t).pend; }).length;
+  var pend = DB.tickets.filter(requiereAccion).length;
   id('cntCola').textContent = pend;
   var nav0 = document.querySelector('#nav .item[data-view="bandeja"] .cnt');
   if(nav0) nav0.classList.toggle('alerta', pend>0);
@@ -1402,7 +1443,7 @@ function crearParte(){
   t.estado = 'En curso';
   cerrarModal();
   toast('Parte '+ref+' creado · factura '+e.nombre);
-  soloPend = false; current = 'partes'; render();
+  filtroEstado='all'; current = 'partes'; render();
   abrirParte(ref);
 }
 
@@ -1429,8 +1470,13 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
-  var pend = e.target.closest('[data-pend]');
-  if(pend){ soloPend = !soloPend; render(); return; }
+  var ef = e.target.closest('[data-estf]');
+  if(ef){
+    var v = ef.getAttribute('data-estf');
+    filtroEstado = (filtroEstado===v && v!=='all') ? 'all' : v;
+    if(filtroEstado!=='all' && filtroTipo==='parte') filtroTipo='all';
+    render(); return;
+  }
 
   var mp = e.target.closest('#viewPick button');
   if(mp){ modo = mp.getAttribute('data-modo'); render(); return; }
@@ -1642,7 +1688,7 @@ id('newbtn').addEventListener('click', function(){
   var v = VIEWS[current];
   if(v.act==='portal'){ show('portal'); toast('Crea el ticket desde el portal de cliente'); return; }
   if(v.act==='pendientes'){
-    current='bandeja'; modo='lista'; soloPend=true; filtroTipo='all'; q=''; id('search').value='';
+    current='bandeja'; modo='lista'; filtroEstado='accion'; filtroTipo='all'; q=''; id('search').value='';
     render();
     toast('Un parte nace de un aviso: elige uno y pulsa «Convertir en parte»');
     return;
