@@ -1852,8 +1852,8 @@ function pintarHilo(t){
   host.innerHTML = m.length
     ? m.map(function(x){
         var quien = x.de==='cliente' ? cliDe(t.cliente).nombre
-                  : x.de==='nota' ? 'Nota interna · '+yo().nombre
-                  : yo().nombre;
+                  : x.de==='nota' ? 'Nota interna · '+(x.por||yo().nombre)
+                  : (x.por || t.agente || 'Asistencia técnica');
         if(x.de==='sistema') return '<div class="msg sistema">'+esc(x.txt)+'</div>';
         return '<div class="msg '+x.de+'"><div class="from"><span>'+esc(quien)+'</span><time>'+selloMsg(x.t)+'</time></div>'+esc(x.txt)+'</div>';
       }).join('')
@@ -2313,15 +2313,25 @@ id('dBody').addEventListener('click', function(e){
     var tRef = drawerRef.split(':')[1], t = ticketDe(tRef);
     var txt = id('msgTxt').value.trim();
     if(!txt){ toast('Escribe el mensaje antes de enviarlo'); id('msgTxt').focus(); return; }
-    var tipo = snd.getAttribute('data-send');
+    /* El botón dice a quién va dirigido; el autor siempre es quien tiene la sesión. */
+    var destino = snd.getAttribute('data-send');
+    var autor = destino==='nota' ? 'nota' : 'agente';
     t.msgs = t.msgs || [];
-    t.msgs.push({de:tipo, txt:txt, t:new Date()});
-    if(tipo==='cliente' && (t.estado==='Abierto' || t.estado==='Pendiente soporte')){
-      t.estado = 'Asignado';
-      t.msgs.push({de:'sistema', txt:'El aviso pasa a Asignado', t:new Date()});
+    t.msgs.push({de:autor, txt:txt, t:new Date(), por:yo().nombre});
+
+    if(destino==='cliente'){
+      /* Quien responde se hace cargo del aviso. */
+      if(!t.agente || t.agente==='Sin asignar'){
+        t.agente = yo().nombre;
+        t.msgs.push({de:'sistema', txt:'Asignado a '+yo().nombre, t:new Date()});
+      }
+      if(t.estado==='Abierto' || t.estado==='Pendiente soporte'){
+        t.estado = 'Asignado';
+        t.msgs.push({de:'sistema', txt:'El aviso pasa a Asignado', t:new Date()});
+      }
     }
     id('msgTxt').value='';
-    toast(tipo==='nota' ? 'Nota interna guardada · el cliente no la ve' : 'Respuesta enviada al cliente');
+    toast(destino==='nota' ? 'Nota interna guardada · el cliente no la ve' : 'Respuesta enviada al cliente · aviso asignado a '+yo().nombre);
     abrirTicket(tRef); render(); return;
   }
   var est = e.target.closest('[data-estado]');
