@@ -618,6 +618,33 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .welcalc .alcance .lead{font-size:14px;}
 .welcome{align-items:flex-start; padding-top:40px; padding-bottom:40px;}
 
+/* ---------- Cuadros de inversión ---------- */
+.usuwrap{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:18px 0 6px;}
+.usupick{display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:10px 14px;}
+.usupick input{width:74px; font-size:15px; font-weight:800; font-family:inherit; text-align:right; color:var(--ink); background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-variant-numeric:tabular-nums; outline:none;}
+.usupick input:focus{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
+.usunota{font-size:12.5px; color:var(--muted);}
+.tinv{width:100%; border-collapse:collapse; min-width:0;}
+.tinv thead th{font-size:10px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); font-weight:700; text-align:left; padding:10px 14px; background:var(--surface-2); border-bottom:1px solid var(--line); white-space:nowrap;}
+.tinv thead th.r, .tinv td.r{text-align:right;}
+.tinv td{padding:9px 14px; font-size:13px; color:var(--text); border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums;}
+.tinv td.r{white-space:nowrap;}
+.tinv tr.sub td{font-weight:700; color:var(--ink); background:var(--surface-2);}
+.tinv tr.iva td{color:var(--muted);}
+.tinv tr.tot td{font-weight:800; color:var(--ink); background:var(--gold-tint); border-bottom:none; font-size:13.5px;}
+.alch3{margin:26px 0 12px; font-size:15px; font-weight:800; color:var(--ink); letter-spacing:.2px;}
+.resu{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+.resuh{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:13px 18px; background:var(--ink); color:#fff; flex-wrap:wrap;}
+.resu.op .resuh{background:var(--ok);}
+.resuh b{font-size:13.5px; font-weight:800;}
+.resuh span{font-size:10px; letter-spacing:.8px; text-transform:uppercase; opacity:.75;}
+.rl{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:9px 18px; font-size:13px; color:var(--muted);}
+.rl b{color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.rl.fuerte{color:var(--text); font-weight:600;}
+.rl.fuerte b{font-size:15px; font-weight:800; color:var(--gold-deep);}
+.resu.op .rl.fuerte b{color:var(--ok);}
+.rsep{height:1px; background:var(--line); margin:7px 18px; border-top:1px dashed var(--line);}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -1477,6 +1504,60 @@ var MODULOS = [
     'Informes de recursos humanos']}
 ];
 
+var nUsuarios = 6;
+var TARIFAS = {
+  impl: [['Facturación',50],['Contabilidad',50],['Soporte a clientes',50],['RRHH — Fenix HR',50]],
+  oper: [['Facturación',33],['Contabilidad',33],['Soporte a clientes',33],['RRHH — Fenix HR',7.5]]
+};
+var IVA = 0.21;
+
+function tablaFase(filas, n){
+  var sub = filas.reduce(function(a,f){ return a + f[1]*n; }, 0);
+  var iva = sub*IVA;
+  return {
+    html: '<table class="tinv"><thead><tr><th>Concepto</th><th class="r">€/usu./mes</th>'
+        + '<th class="r">Usuarios</th><th class="r">Importe/mes</th></tr></thead><tbody>'
+        + filas.map(function(f){
+            return '<tr><td>'+esc(f[0])+'</td><td class="r">'+eur(f[1])+'</td>'
+                 + '<td class="r">'+n+'</td><td class="r">'+eur(f[1]*n)+'</td></tr>';
+          }).join('')
+        + '<tr class="sub"><td colspan="3">Subtotal (sin IVA)</td><td class="r">'+eur(sub)+'</td></tr>'
+        + '<tr class="iva"><td colspan="3">IVA 21 %</td><td class="r">'+eur(iva)+'</td></tr>'
+        + '<tr class="tot"><td colspan="3">Total mensual (IVA incl.)</td><td class="r">'+eur(sub+iva)+'</td></tr>'
+        + '</tbody></table>',
+    sub: sub, iva: iva, total: sub+iva
+  };
+}
+
+function cuadrosInversion(){
+  var n = nUsuarios;
+  var a = tablaFase(TARIFAS.impl, n), b = tablaFase(TARIFAS.oper, n);
+  return ''
+  + '<div class="fases">'
+  +   '<div class="fase"><div class="faseh"><b>Fase de implementación</b><span>hasta 6 meses</span></div>'+a.html+'</div>'
+  +   '<div class="fase op"><div class="faseh"><b>Fase de operación</b><span>a partir de entonces</span></div>'+b.html+'</div>'
+  + '</div>'
+  + '<h3 class="alch3">Resumen de la inversión</h3>'
+  + '<div class="fases">'
+  +   '<div class="resu"><div class="resuh"><b>Fase de implementación</b><span>hasta 6 meses</span></div>'
+  +     '<div class="rl"><span>Cuota mensual (sin IVA)</span><b>'+eur(a.sub)+'</b></div>'
+  +     '<div class="rl"><span>IVA 21 %</span><b>'+eur(a.iva)+'</b></div>'
+  +     '<div class="rl fuerte"><span>Cuota mensual (IVA incl.)</span><b>'+eur(a.total)+'</b></div>'
+  +     '<div class="rsep"></div>'
+  +     '<div class="rl"><span>Máximo 6 meses (sin IVA)</span><b>'+eur(a.sub*6)+'</b></div>'
+  +     '<div class="rl fuerte"><span>Máximo 6 meses (IVA incl.)</span><b>'+eur(a.total*6)+'</b></div>'
+  +   '</div>'
+  +   '<div class="resu op"><div class="resuh"><b>Fase de operación</b><span>a partir de entonces</span></div>'
+  +     '<div class="rl"><span>Cuota mensual (sin IVA)</span><b>'+eur(b.sub)+'</b></div>'
+  +     '<div class="rl"><span>IVA 21 %</span><b>'+eur(b.iva)+'</b></div>'
+  +     '<div class="rl fuerte"><span>Cuota mensual (IVA incl.)</span><b>'+eur(b.total)+'</b></div>'
+  +     '<div class="rsep"></div>'
+  +     '<div class="rl"><span>Total anual (sin IVA)</span><b>'+eur(b.sub*12)+'</b></div>'
+  +     '<div class="rl fuerte"><span>Total anual (IVA incl.)</span><b>'+eur(b.total*12)+'</b></div>'
+  +   '</div>'
+  + '</div>';
+}
+
 function contenidoAlcance(){
   return ''
   + '<div class="alcance">'
@@ -1493,28 +1574,13 @@ function contenidoAlcance(){
   +   '</div>'
   +   '<h2 class="alch2">Condiciones económicas</h2>'
   +   '<p class="lead">La inversión se estructura <b>por usuario y por módulo</b>, en dos fases. La implantación no supone coste adicional: queda cubierta por la cuota de la fase de implementación.</p>'
-  +   '<div class="fases">'
-  +     '<div class="fase">'
-  +       '<div class="faseh"><b>Fase de implementación</b><span>hasta 6 meses</span></div>'
-  +       '<table class="tarifas"><tbody>'
-  +         '<tr><td>Facturación</td><td class="r">50,00 €</td></tr>'
-  +         '<tr><td>Contabilidad</td><td class="r">50,00 €</td></tr>'
-  +         '<tr><td>Soporte a clientes</td><td class="r">50,00 €</td></tr>'
-  +         '<tr><td>RRHH — Fenix HR</td><td class="r">50,00 €</td></tr>'
-  +       '</tbody></table>'
-  +       '<p class="faseft">por usuario y mes, en cada módulo contratado</p>'
-  +     '</div>'
-  +     '<div class="fase op">'
-  +       '<div class="faseh"><b>Fase de operación</b><span>a partir de entonces</span></div>'
-  +       '<table class="tarifas"><tbody>'
-  +         '<tr><td>Facturación</td><td class="r">33,00 €</td></tr>'
-  +         '<tr><td>Contabilidad</td><td class="r">33,00 €</td></tr>'
-  +         '<tr><td>Soporte a clientes</td><td class="r">33,00 €</td></tr>'
-  +         '<tr><td>RRHH — Fenix HR</td><td class="r">7,50 €</td></tr>'
-  +       '</tbody></table>'
-  +       '<p class="faseft">por usuario y mes, en cada módulo contratado</p>'
-  +     '</div>'
+  +   '<div class="usuwrap">'
+  +     '<label class="usupick" for="nUsu">Número de usuarios'
+  +       '<input id="nUsu" type="number" min="1" max="500" step="1" value="'+nUsuarios+'">'
+  +     '</label>'
+  +     '<span class="usunota">Los importes de abajo se recalculan al cambiarlo.</span>'
   +   '</div>'
+  +   '<div id="cuadros">'+cuadrosInversion()+'</div>'
   +   '<ul class="cond">'
   +     '<li><b>Implantación incluida.</b> La puesta en marcha no supone una inversión adicional.</li>'
   +     '<li><b>Fase de implementación e integración:</b> duración no superior a 6 meses.</li>'
@@ -2385,6 +2451,16 @@ function entrarComo(uid){
   var a = yo();
   toast('Sesión de '+a.nombre+' · '+(esAdmin()?'ve las tres empresas':'solo '+a.empresas));
 }
+function onUsuarios(e){
+  if(e.target.id!=='nUsu') return;
+  var v = parseInt(e.target.value,10);
+  nUsuarios = (isNaN(v)||v<1) ? 1 : Math.min(v,500);
+  var host = id('cuadros');
+  if(host) host.innerHTML = cuadrosInversion();
+}
+id('welcome').addEventListener('input', onUsuarios);
+id('portalWrap').addEventListener('input', onUsuarios);
+
 id('welcome').addEventListener('click', function(e){
   if(e.target.closest('#verAlcanceIni')){ alternarAlcance(); return; }
   var b = e.target.closest('[data-user]');
