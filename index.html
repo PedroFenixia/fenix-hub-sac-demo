@@ -479,7 +479,7 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .col.accion{border-color:var(--warn);}
 .col.accion .colh{background:var(--warn-bg);}
 .colh .doing{font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--warn); background:var(--surface); border:1px solid currentColor; border-radius:20px; padding:1px 7px;}
-.board{grid-template-columns:repeat(6,minmax(196px,1fr));}
+.board{grid-template-columns:repeat(7,minmax(186px,1fr));}
 
 /* ---------- Filtros con selectores ---------- */
 .fgroup{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;}
@@ -656,6 +656,13 @@ var DB = {
       {de:'agente', txt:'Para subir a cubierta necesitamos que el administrador nos autorice el acceso. ¿Podéis confirmarlo?', t:hAgo(7.5)},
       {de:'sistema', txt:'El aviso queda en pausa a la espera del cliente', t:hAgo(7.5)}
     ]},
+    {ref:'TCK-104', asunto:'Revisión anual del sistema contra incendios', cliente:'delta', prio:'Baja', estado:'Pendiente soporte', agente:'Marc', creado:hAgo(11), desc:'Toca la revisión anual obligatoria.', area:'Todo el edificio', msgs:[
+      {de:'cliente', txt:'¿Podéis pasar la semana del 28?', t:hAgo(11)},
+      {de:'agente', txt:'Sí. ¿Nos confirmáis a qué hora podemos acceder al archivo del sótano?', t:hAgo(9)},
+      {de:'sistema', txt:'El aviso queda en pausa a la espera del cliente', t:hAgo(9)},
+      {de:'cliente', txt:'De 8 a 10 de la mañana, el conserje os abrirá.', t:hAgo(1.2)},
+      {de:'sistema', txt:'Respuesta del cliente · vuelve al equipo de soporte', t:hAgo(1.2)}
+    ]},
     {ref:'TCK-106', asunto:'Presupuesto: nueva instalación de frío', cliente:'horno', prio:'Alta', estado:'Abierto', agente:'Pedro', creado:hAgo(6.4),  desc:'Quieren presupuesto para cámara de frío en el obrador.', area:'Obrador', msgs:[
       {de:'cliente', txt:'Necesitamos el presupuesto antes de fin de mes para pedir la subvención.', t:hAgo(6.4)}
     ]}
@@ -685,10 +692,11 @@ function misEmpresas(){
 function puedeVer(empId){ return !empId || misEmpresas().indexOf(empId)>-1; }
 function esAdmin(){ return yo().rol==='Administrador'; }
 
-var ESTADOS_TICKET = ['Abierto','Asignado','En curso','Esperando al cliente','Resuelto','Cerrado'];
-/* Requiere acción = nadie lo ha cogido todavía. En cuanto tiene técnico
-   asignado ya hay alguien que responde, así que sale del recuento. */
-var ESTADOS_ACCION = ['Abierto'];
+var ESTADOS_TICKET = ['Abierto','Pendiente soporte','Asignado','En curso','Esperando al cliente','Resuelto','Cerrado'];
+/* Requiere acción = la pelota está en el tejado del soporte:
+   «Abierto» (nadie lo ha cogido) y «Pendiente soporte» (el cliente ya
+   contestó y toca responderle). Con técnico asignado o trabajando, no. */
+var ESTADOS_ACCION = ['Abierto','Pendiente soporte'];
 function requiereAccion(t){ return ESTADOS_ACCION.indexOf(t.estado)>-1; }
 function esperaCliente(t){ return t.estado==='Esperando al cliente'; }
 function hora(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -755,7 +763,7 @@ function fechaCorta(d){
 }
 var COLOR_ESTADO = {
   'Abierto':'var(--danger)','En curso':'var(--warn)','Resuelto':'var(--ok)','Cerrado':'var(--neutral)',
-  'Asignado':'var(--warn)', 'Esperando al cliente':'var(--ticket)',
+  'Pendiente soporte':'var(--danger)', 'Asignado':'var(--warn)', 'Esperando al cliente':'var(--ticket)',
   'Borrador':'var(--neutral)','Confirmado':'var(--vega)','Facturado':'var(--ok)'
 };
 function chipEmpresa(empId){
@@ -813,6 +821,7 @@ function gestion(t){
   if(t.estado==='Resuelto') return {k:'listo',   txt:'Resuelto', pend:false};
   if(esperaCliente(t))      return {k:'espera',  txt:'Esperando tu respuesta', pend:false};
   if(t.estado==='En curso') return {k:'encurso', txt:'Técnico trabajando', pend:false};
+  if(t.estado==='Pendiente soporte') return {k:'esperando', txt:'Con el equipo de soporte', pend:true};
   if(t.estado==='Asignado') return {k:'encurso', txt:'Técnico asignado',   pend:false};
   return {k:'esperando', txt:'Abierto', pend:true};
 }
@@ -1116,6 +1125,10 @@ function pintarPortal(){
       + '<div class="tkbar '+s2.clase+'"><span style="width:'+pct+'%"></span></div>'
       + '<div class="l2">'+chipEstado(t.estado)
       +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span></div>'
+      + (g.k==='espera'
+          ? '<div class="reply" style="margin-top:11px"><textarea id="resp-'+t.ref+'" placeholder="Escribe tu respuesta al técnico…" aria-label="Responder"></textarea>'
+            + '<div class="rowbtn"><button class="tbtn solid" data-resp="'+t.ref+'">Responder</button></div></div>'
+          : '')
       + (visibles.length
           ? '<div class="thread" style="margin-top:11px">'+visibles.map(function(x){
               if(x.de==='sistema') return '<div class="msg sistema">'+esc(x.txt)+'</div>';
@@ -1533,6 +1546,20 @@ id('portalWrap').addEventListener('change', function(e){
 });
 id('portalWrap').addEventListener('click', function(e){
   if(e.target.id==='portalExit'){ cerrarPortal(); return; }
+  var resp = e.target.closest('[data-resp]');
+  if(resp){
+    var t = ticketDe(resp.getAttribute('data-resp'));
+    var box = id('resp-'+t.ref), txt = box ? box.value.trim() : '';
+    if(!txt){ toast('Escribe tu respuesta'); if(box) box.focus(); return; }
+    t.msgs = t.msgs || [];
+    t.msgs.push({de:'cliente', txt:txt, t:new Date()});
+    if(t.estado==='Esperando al cliente'){
+      t.estado = 'Pendiente soporte';
+      t.msgs.push({de:'sistema', txt:'Respuesta del cliente · vuelve al equipo de soporte', t:new Date()});
+    }
+    toast('Respuesta enviada · el equipo la verá en su bandeja');
+    pintarPortal(); render(); return;
+  }
   if(e.target.id==='portalSwap'){
     var ids = DB.clientes.map(function(x){return x.id;});
     portalCli = ids[(ids.indexOf(portalCli)+1) % ids.length];
@@ -1572,7 +1599,7 @@ id('dBody').addEventListener('click', function(e){
     var tipo = snd.getAttribute('data-send');
     t.msgs = t.msgs || [];
     t.msgs.push({de:tipo, txt:txt, t:new Date()});
-    if(tipo==='cliente' && t.estado==='Abierto'){
+    if(tipo==='cliente' && (t.estado==='Abierto' || t.estado==='Pendiente soporte')){
       t.estado = 'Asignado';
       t.msgs.push({de:'sistema', txt:'El aviso pasa a Asignado', t:new Date()});
     }
