@@ -1507,6 +1507,7 @@ var MODULOS = [
     'Informes de recursos humanos']}
 ];
 
+var MIN_USUARIOS = 5;
 var nUsuarios = 6;
 var TARIFAS = {
   impl: [['Facturación',50],['Contabilidad',50],['Soporte a clientes',50],['RRHH — Fenix HR',50]],
@@ -1579,9 +1580,9 @@ function contenidoAlcance(){
   +   '<p class="lead">La inversión se estructura <b>por usuario y por módulo</b>, en dos fases. La implantación no supone coste adicional: queda cubierta por la cuota de la fase de implementación.</p>'
   +   '<div class="usuwrap">'
   +     '<label class="usupick" for="nUsu">Número de usuarios'
-  +       '<input id="nUsu" type="number" min="1" max="500" step="1" value="'+nUsuarios+'">'
+  +       '<input id="nUsu" type="number" min="5" max="500" step="1" value="'+nUsuarios+'">'
   +     '</label>'
-  +     '<span class="usunota">Los importes de abajo se recalculan al cambiarlo.</span>'
+  +     '<span class="usunota"><b>Mínimo 5 usuarios.</b> Los importes de abajo se recalculan al cambiarlo.</span>'
   +   '</div>'
   +   '<div id="cuadros">'+cuadrosInversion()+'</div>'
   +   '<ul class="cond">'
@@ -1589,7 +1590,7 @@ function contenidoAlcance(){
   +     '<li><b>Fase de implementación e integración:</b> duración no superior a 6 meses.</li>'
   +     '<li><b>Fase de operación:</b> finalizada la implementación, la tarifa baja de 50 € a 33 € por usuario y módulo.</li>'
   +     '<li><b>Permanencia:</b> 1 año, con un mínimo hasta la finalización del desarrollo e implementación. Después continúa sin permanencia, cancelable con preaviso.</li>'
-  +     '<li><b>Número de usuarios:</b> la facturación se ajusta al número real de usuarios activos.</li>'
+  +     '<li><b>Número de usuarios:</b> mínimo 5 usuarios; la facturación se ajusta al número real de usuarios activos por encima de ese mínimo.</li>'
   +     '<li><b>Impuestos:</b> todos los importes se incrementan con el IVA vigente (21 %).</li>'
   +   '</ul>'
   +   '<div class="alcfoot">'
@@ -2458,12 +2459,24 @@ function entrarComo(uid){
 function onUsuarios(e){
   if(e.target.id!=='nUsu') return;
   var v = parseInt(e.target.value,10);
-  nUsuarios = (isNaN(v)||v<1) ? 1 : Math.min(v,500);
+  nUsuarios = (isNaN(v)||v<MIN_USUARIOS) ? MIN_USUARIOS : Math.min(v,500);
   var host = id('cuadros');
   if(host) host.innerHTML = cuadrosInversion();
 }
 id('welcome').addEventListener('input', onUsuarios);
 id('portalWrap').addEventListener('input', onUsuarios);
+function corrigeUsuarios(e){
+  if(e.target.id!=='nUsu') return;
+  var v = parseInt(e.target.value,10);
+  if(isNaN(v) || v < MIN_USUARIOS){
+    e.target.value = MIN_USUARIOS;
+    nUsuarios = MIN_USUARIOS;
+    var host = id('cuadros'); if(host) host.innerHTML = cuadrosInversion();
+    toast('La contratación parte de '+MIN_USUARIOS+' usuarios');
+  }
+}
+id('welcome').addEventListener('change', corrigeUsuarios);
+id('portalWrap').addEventListener('change', corrigeUsuarios);
 
 id('welcome').addEventListener('click', function(e){
   if(e.target.closest('#verAlcanceIni')){ alternarAlcance(); return; }
