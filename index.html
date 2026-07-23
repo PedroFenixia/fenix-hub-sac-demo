@@ -157,7 +157,8 @@ tbody tr:last-child td{border-bottom:none;}
 .clickable tbody tr:hover{background:var(--gold-tint);}
 .ref{color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap;}
 .as{font-weight:700; color:var(--ink); font-size:14px;}
-.cl{color:var(--muted); font-size:12px; margin-top:2px;}
+.cl{color:var(--text); font-size:12.5px; font-weight:600; margin-top:3px;}
+.sub{color:var(--muted); font-size:12px; margin-top:2px;}
 .none{color:var(--muted); font-style:italic;}
 .fch{color:var(--muted); white-space:nowrap;}
 .tip{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; padding:5px 12px; border-radius:8px; white-space:nowrap;}
@@ -566,8 +567,8 @@ function vCola(){
     var c = cliDe(t.cliente);
     return '<tr data-open="ticket:'+t.ref+'">'
       + '<td class="ref">'+esc(t.ref)+'</td>'
-      + '<td><div class="as">'+esc(t.asunto)+'</div><div class="cl">'+esc(t.area)+'</div></td>'
-      + '<td><div class="as" style="font-size:13px">'+esc(c.nombre)+'</div><div class="cl">'+esc(c.sector)+'</div></td>'
+      + '<td><div class="as">'+esc(t.asunto)+'</div><div class="sub">'+esc(t.area)+'</div></td>'
+      + '<td><div class="as" style="font-size:13px">'+esc(c.nombre)+'</div><div class="sub">'+esc(c.sector)+'</div></td>'
       + '<td><span class="prio prio-'+t.prio+'">'+t.prio+'</span></td>'
       + '<td><span class="sla sla-'+s.clase+'">'+esc(s.txt)+'</span></td>'
       + '<td class="r"><button class="tbtn solid" data-convert="'+t.ref+'">Convertir en parte</button></td></tr>';
