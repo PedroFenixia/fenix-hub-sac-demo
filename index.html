@@ -428,9 +428,7 @@ tbody tr:last-child td{border-bottom:none;}
 .boardhint{font-size:12.5px; color:var(--muted); margin:0 2px 14px; line-height:1.6;}
 
 /* ---------- Acciones de fila (al pasar el ratón) ---------- */
-.rowact{opacity:0; transition:opacity .12s; white-space:nowrap;}
-tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
-@media (hover:none){ .rowact{opacity:1;} }
+.rowact{white-space:nowrap;}
 .viewpick{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
 .viewpick button{font-size:12.5px; font-weight:600; color:var(--muted); padding:8px 15px; cursor:pointer; border:none; background:none; font-family:inherit; display:inline-flex; align-items:center; gap:7px;}
 .viewpick button.on{background:var(--gold); color:var(--on-accent); font-weight:700;}
@@ -667,6 +665,10 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .lgchips{display:flex; flex-wrap:wrap; gap:6px;}
 .mailchip{font-size:11.5px; font-family:inherit; color:var(--text); background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:5px 11px; margin:0; cursor:pointer;}
 .mailchip:hover{border-color:var(--gold); color:var(--gold-deep); background:var(--gold-tint);}
+
+.asigrow{display:flex; gap:8px; align-items:center; margin-top:6px;}
+.asigrow select{flex:1; min-width:0; font-size:13px; font-family:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:9px 11px; cursor:pointer; outline:none;}
+.asigrow select:focus{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
 
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -1875,6 +1877,24 @@ function abrirTicket(ref){
     + drow('Área', t.area) + drow('Creado', fechaHora(t.creado)+' · '+haceQue(t.creado))
     + (t.estado==='Cerrado' && t.motivo ? drow('Motivo del cierre', t.motivo) : '')
     + '<div class="dsec">Acciones</div>'
+    + '<div class="dsec">Técnico asignado</div>'
+    + '<div class="asigrow">'
+    +   '<select id="selAgente" aria-label="Asignar técnico">'
+    +     '<option value="">— sin asignar —</option>'
+    +     DB.agentes.filter(function(a){
+            if(a.rol==='Administrador') return true;
+            var suyas = a.empresas==='Todas' ? DB.empresas.map(function(e){return e.id;})
+              : a.empresas.split(' · ').map(function(nm){
+                  var e=DB.empresas.filter(function(x){return x.corto===nm;})[0]; return e?e.id:null; });
+            return suyas.filter(Boolean).length>0;
+          }).map(function(a){
+            return '<option value="'+esc(a.nombre)+'"'+(t.agente===a.nombre?' selected':'')+'>'
+              + esc(a.nombre)+' · '+esc(a.rol)+'</option>';
+          }).join('')
+    +   '</select>'
+    +   (t.agente && t.agente!=='Sin asignar'
+        ? '' : '<button class="tbtn solid" data-tomar="'+t.ref+'">Hacerme cargo</button>')
+    + '</div>'
     + '<div class="dsec">Estado del aviso</div>'
     + '<div class="statepick">'+ESTADOS_TICKET.map(function(x){
         return '<button data-estado="'+x+'" class="'+(t.estado===x?'on':'')+'"><i style="background:'+COLOR_ESTADO[x]+'"></i>'+x+'</button>';
@@ -2329,6 +2349,21 @@ id('portalWrap').addEventListener('click', function(e){
   if(e.target.id==='lgBtn'){ e.preventDefault(); entrarPortal(id('lgMail').value); return; }
   if(e.target.id==='portalSend'){ enviarPortal(); return; }
 });
+id('dBody').addEventListener('change', function(e){
+  if(e.target.id!=='selAgente') return;
+  var t = ticketDe(drawerRef.split(':')[1]); if(!t) return;
+  var nuevo = e.target.value || 'Sin asignar';
+  if(t.agente===nuevo) return;
+  t.agente = nuevo;
+  t.msgs = t.msgs || [];
+  t.msgs.push({de:'sistema', txt: nuevo==='Sin asignar'
+    ? 'El aviso vuelve a la cola, sin técnico'
+    : 'Asignado a '+nuevo+' por '+yo().nombre, t:new Date()});
+  if(nuevo!=='Sin asignar' && (t.estado==='Abierto'||t.estado==='Pendiente soporte')) t.estado='Asignado';
+  if(nuevo==='Sin asignar' && t.estado==='Asignado') t.estado='Abierto';
+  toast(nuevo==='Sin asignar' ? 'Aviso devuelto a la cola' : 'Asignado a '+nuevo);
+  abrirTicket(t.ref); render();
+});
 id('dBody').addEventListener('input', function(e){
   if(e.target.matches('#labH,#labC,#labV')){ recalcular(); return; }
   var mi = e.target.getAttribute('data-mat');
@@ -2384,6 +2419,16 @@ id('dBody').addEventListener('click', function(e){
     id('msgTxt').value='';
     toast(destino==='nota' ? 'Nota interna guardada · el cliente no la ve' : 'Respuesta enviada al cliente · aviso asignado a '+yo().nombre);
     abrirTicket(tRef); render(); return;
+  }
+  var tomar = e.target.closest('[data-tomar]');
+  if(tomar){
+    var tt = ticketDe(tomar.getAttribute('data-tomar'));
+    tt.agente = yo().nombre;
+    tt.msgs = tt.msgs || [];
+    tt.msgs.push({de:'sistema', txt:yo().nombre+' se hace cargo del aviso', t:new Date()});
+    if(tt.estado==='Abierto' || tt.estado==='Pendiente soporte') tt.estado = 'Asignado';
+    toast('Aviso '+tt.ref+' asignado a ti');
+    abrirTicket(tt.ref); render(); return;
   }
   var est = e.target.closest('[data-estado]');
   if(est){
