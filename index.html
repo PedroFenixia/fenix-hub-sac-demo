@@ -403,6 +403,28 @@ tbody tr:last-child td{border-bottom:none;}
 .statepick button i{width:8px; height:8px; border-radius:50%;}
 .unread{display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px; padding:0 5px; border-radius:20px; background:var(--ticket); color:#fff; font-size:10.5px; font-weight:700; margin-left:7px; vertical-align:middle;}
 
+/* ---------- Tablero kanban ---------- */
+.board{display:grid; grid-template-columns:repeat(4,minmax(224px,1fr)); gap:14px; align-items:start; overflow-x:auto; padding-bottom:6px;}
+@media (max-width:1000px){ .board{grid-template-columns:repeat(4,minmax(224px,1fr)); }}
+.col{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); min-height:180px; display:flex; flex-direction:column;}
+.col.over{border-color:var(--gold); background:var(--gold-tint);}
+.colh{display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line);}
+.colh i{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+.colh b{font-size:12.5px; color:var(--ink); font-weight:700;}
+.colh .n{margin-left:auto; font-size:11px; font-weight:700; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:1px 8px; font-variant-numeric:tabular-nums;}
+.colb{padding:10px; display:flex; flex-direction:column; gap:9px; flex:1;}
+.kc{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; cursor:grab; box-shadow:var(--shadow);}
+.kc:active{cursor:grabbing;}
+.kc.drag{opacity:.45;}
+.kc .kr{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:5px;}
+.kc .kref{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums;}
+.kc .kt{font-size:13px; font-weight:700; color:var(--ink); line-height:1.35;}
+.kc .kcli{font-size:12px; color:var(--text); font-weight:600; margin-top:4px;}
+.kc .kf{display:flex; align-items:center; gap:6px; margin-top:9px; flex-wrap:wrap;}
+.kc .kag{font-size:11.5px; color:var(--muted); margin-left:auto;}
+.colempty{padding:20px 10px; text-align:center; color:var(--muted); font-size:12px; border:1px dashed var(--line); border-radius:9px;}
+.boardhint{font-size:12.5px; color:var(--muted); margin:0 2px 14px; line-height:1.6;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -433,6 +455,7 @@ tbody tr:last-child td{border-bottom:none;}
     <nav class="nav" id="nav">
       <button class="item on" data-view="bandeja"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M2 12h6l2 3h4l2-3h6"/></svg></span>Bandeja única</button>
       <button class="item" data-view="cola"><span class="ic"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>Cola de entrada<span class="cnt" id="cntCola">0</span></button>
+      <button class="item" data-view="tablero"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg></span>Tablero<span class="cnt">0</span></button>
       <button class="item" data-view="partes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span>Partes de trabajo<span class="cnt" id="cntPartes">0</span></button>
       <button class="item" data-view="clientes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
       <button class="item" data-view="articulos"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></span>Artículos</button>
@@ -666,6 +689,7 @@ var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
 var VIEWS = {
   bandeja:    {title:'Bandeja única',      sub:'Todos los tickets y partes de trabajo, de todas las empresas', ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
   cola:       {title:'Cola de entrada',    sub:'Tickets sin convertir, ordenados por vencimiento de SLA',       ph:'Buscar en la cola…',            btn:'+ Nuevo ticket',   act:'portal'},
+  tablero:    {title:'Tablero',            sub:'Avisos por estado · arrastra una tarjeta para moverla',         ph:'Buscar en el tablero…',         btn:'+ Nuevo ticket',   act:'portal'},
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'cola'},
   clientes:   {title:'Clientes',           sub:'Empresas cliente y su actividad',                               ph:'Buscar cliente…',               btn:'+ Nuevo cliente',  act:'demo'},
   articulos:  {title:'Artículos',          sub:'Catálogo de materiales y precios',                              ph:'Buscar artículo…',              btn:'+ Nuevo artículo', act:'demo'},
@@ -776,6 +800,35 @@ function vCola(){
   + '<tbody>'+body+'</tbody></table></div>'
   + (pend.length?'':'<div class="blank"><div class="ico">✓</div><b>Cola vacía</b><span>Todos los tickets se han convertido en parte de trabajo.</span></div>')+'</div>'
   + '<p class="cap">La cola prioriza por SLA: primero lo vencido, luego lo que está en riesgo. Alta 4 h · Media 8 h · Baja 24 h, y se marca «en riesgo» cuando queda menos del 25 % del tiempo.</p>';
+}
+
+function vTablero(){
+  var ts = DB.tickets.filter(function(t){
+    return coincide(t.ref+' '+t.asunto+' '+cliDe(t.cliente).nombre+' '+t.agente);
+  });
+  var cols = ESTADOS_TICKET.map(function(est){
+    var enCol = ts.filter(function(t){ return t.estado===est; })
+                  .sort(function(a,b){ return slaDe(a).restante - slaDe(b).restante; });
+    var cards = enCol.map(function(t){
+      var s2 = slaDe(t), c = cliDe(t.cliente);
+      var yaTiene = DB.partes.some(function(p){return p.ticket===t.ref;});
+      return '<article class="kc" draggable="true" data-kt="'+t.ref+'" data-open="ticket:'+t.ref+'">'
+        + '<div class="kr"><span class="kref">'+esc(t.ref)+'</span>'
+        +   '<span class="prio prio-'+t.prio+'">'+t.prio+'</span></div>'
+        + '<div class="kt">'+esc(t.asunto)+(sinLeer(t)?'<span class="unread" title="Esperando respuesta">1</span>':'')+'</div>'
+        + '<div class="kcli">'+esc(c.nombre)+'</div>'
+        + '<div class="kf"><span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span>'
+        +   (yaTiene?'<span class="tip parte" style="font-size:11px;padding:3px 8px">&#9656; Parte</span>':'')
+        +   '<span class="kag">'+esc(t.agente)+'</span></div>'
+        + '</article>';
+    }).join('');
+    return '<section class="col" data-col="'+est+'">'
+      + '<div class="colh"><i style="background:'+COLOR_ESTADO[est]+'"></i><b>'+est+'</b><span class="n">'+enCol.length+'</span></div>'
+      + '<div class="colb">'+(cards || '<div class="colempty">Nada aquí</div>')+'</div>'
+      + '</section>';
+  }).join('');
+  return '<p class="boardhint">Arrastra una tarjeta de columna para cambiar el estado del aviso. Dentro de cada columna, primero lo que antes vence.</p>'
+  + '<div class="board" id="board">'+cols+'</div>';
 }
 
 function vPartes(){
@@ -979,7 +1032,7 @@ function vPortal(){
   + '</div></div>';
 }
 
-var RENDER = {bandeja:vBandeja, cola:vCola, partes:vPartes, clientes:vClientes, articulos:vArticulos,
+var RENDER = {bandeja:vBandeja, cola:vCola, tablero:vTablero, partes:vPartes, clientes:vClientes, articulos:vArticulos,
               almacen:vAlmacen, facturacion:vFacturacion, portal:vPortal, empresas:vEmpresas, agentes:vAgentes};
 
 function render(){
@@ -990,6 +1043,9 @@ function render(){
   id('newbtn').textContent = VIEWS[current].btn;
   var pend = DB.tickets.filter(function(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }).length;
   id('cntCola').textContent = pend;
+  var abiertos = DB.tickets.filter(function(t){ return t.estado!=='Cerrado'; }).length;
+  var cb = document.querySelector('#nav .item[data-view="tablero"] .cnt');
+  if(cb) cb.textContent = abiertos;
   id('cntPartes').textContent = DB.partes.filter(function(p){return puedeVer(p.emp);}).length;
   id('cntStock').textContent = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock<a.min;}).length;
   var a = yo(), n = misEmpresas().length;
@@ -1246,6 +1302,8 @@ id('viewRoot').addEventListener('click', function(e){
   if(e.target.id==='portalSend'){ enviarPortal(); return; }
   if(e.target.closest('input,select,textarea,button')) return;
 
+  var kc = e.target.closest('.kc[data-open]');
+  if(kc){ abrirTicket(kc.getAttribute('data-open').split(':')[1]); return; }
   var tr = e.target.closest('tr[data-open]');
   if(tr){
     var parts = tr.getAttribute('data-open').split(':');
@@ -1363,6 +1421,40 @@ document.addEventListener('keydown', function(e){
   if(e.key!=='Escape') return;
   if(id('modal').classList.contains('show')) cerrarModal();
   else if(id('drawer').classList.contains('show')) cerrarDrawer();
+});
+
+/* ---- Tablero: arrastrar y soltar ---- */
+var arrastrando = null;
+id('viewRoot').addEventListener('dragstart', function(e){
+  var k = e.target.closest('[data-kt]'); if(!k) return;
+  arrastrando = k.getAttribute('data-kt');
+  k.classList.add('drag');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', arrastrando); }catch(err){}
+});
+id('viewRoot').addEventListener('dragend', function(e){
+  var k = e.target.closest('[data-kt]'); if(k) k.classList.remove('drag');
+  Array.prototype.forEach.call(document.querySelectorAll('.col.over'), function(c){ c.classList.remove('over'); });
+  arrastrando = null;
+});
+id('viewRoot').addEventListener('dragover', function(e){
+  var col = e.target.closest('[data-col]'); if(!col || !arrastrando) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  Array.prototype.forEach.call(document.querySelectorAll('.col.over'), function(c){ c.classList.remove('over'); });
+  col.classList.add('over');
+});
+id('viewRoot').addEventListener('drop', function(e){
+  var col = e.target.closest('[data-col]'); if(!col || !arrastrando) return;
+  e.preventDefault();
+  var nuevo = col.getAttribute('data-col'), t = ticketDe(arrastrando);
+  arrastrando = null;
+  if(!t || t.estado===nuevo){ render(); return; }
+  t.estado = nuevo;
+  t.msgs = t.msgs || [];
+  t.msgs.push({de:'sistema', txt:'Estado cambiado a '+nuevo+' por '+yo().nombre, t:new Date()});
+  toast(t.ref+' · '+nuevo);
+  render();
 });
 
 /* ---- Bienvenida y cambio de usuario ---- */
