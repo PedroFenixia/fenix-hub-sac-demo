@@ -865,7 +865,7 @@ var DB = {
       {de:'agente', txt:'Era una fijación suelta. Ya está apretado y equilibrado.', t:hAgo(50)},
       {de:'sistema', txt:'Estado cambiado a Resuelto por Iván T.', t:hAgo(50)}
     ]},
-    {ref:'TCK-106', asunto:'Presupuesto: nueva instalación de frío', cliente:'horno', prio:'Alta', estado:'Abierto', agente:'Pedro', creado:hAgo(6.4),  desc:'Quieren presupuesto para cámara de frío en el obrador.', area:'Obrador', msgs:[
+    {ref:'TCK-106', asunto:'Presupuesto: nueva instalación de frío', cliente:'horno', prio:'Alta', estado:'Abierto', agente:'Sin asignar', creado:hAgo(6.4),  desc:'Quieren presupuesto para cámara de frío en el obrador.', area:'Obrador', msgs:[
       {de:'cliente', txt:'Necesitamos el presupuesto antes de fin de mes para pedir la subvención.', t:hAgo(6.4)}
     ]}
   ],
@@ -2341,6 +2341,7 @@ id('dBody').addEventListener('click', function(e){
     if(t2.estado===nuevo) return;
     if(nuevo==='Cerrado'){ abrirModalCierre(tRef2); return; }
     if(t2.estado==='Cerrado') t2.motivo = null;
+    if(nuevo==='Abierto') t2.agente = 'Sin asignar';
     t2.estado = nuevo;
     t2.msgs = t2.msgs || [];
     t2.msgs.push({de:'sistema', txt:'Estado cambiado a '+nuevo+' por '+yo().nombre, t:new Date()});
@@ -2351,6 +2352,7 @@ id('dBody').addEventListener('click', function(e){
   var conf = e.target.closest('[data-confirm]');
   if(conf){
     var p3 = parteDe(conf.getAttribute('data-confirm'));
+    if(p3.estado!=='Borrador'){ toast('El parte ya está '+p3.estado.toLowerCase()); return; }
     p3.estado = 'Confirmado';
     p3.materiales.forEach(function(l){ var a=artDe(l.cod); if(a) a.stock = Math.max(0, a.stock-l.cant); });
     toast('Parte '+p3.ref+' confirmado · pendiente de facturar');
@@ -2359,6 +2361,8 @@ id('dBody').addEventListener('click', function(e){
   var inv = e.target.closest('[data-invoice]');
   if(inv){
     var p4 = parteDe(inv.getAttribute('data-invoice'));
+    if(p4.estado!=='Confirmado'){ toast('Solo se factura un parte confirmado'); return; }
+    if(facturaDe(p4.ref)){ toast('Ese parte ya tiene factura'); return; }
     var e4 = empDe(p4.emp);
     var num = String(seqFactura[p4.emp]++).padStart(4,'0');
     var doc = 'FAC '+e4.serie.charAt(0)+'-'+num;
@@ -2434,6 +2438,9 @@ id('viewRoot').addEventListener('drop', function(e){
   var nuevo = col.getAttribute('data-col'), t = ticketDe(arrastrando);
   arrastrando = null;
   if(!t || t.estado===nuevo){ render(); return; }
+  if(nuevo==='Cerrado'){ render(); abrirModalCierre(t.ref); return; }
+  if(t.estado==='Cerrado') t.motivo = null;
+  if(nuevo==='Abierto') t.agente = 'Sin asignar';
   t.estado = nuevo;
   t.msgs = t.msgs || [];
   t.msgs.push({de:'sistema', txt:'Estado cambiado a '+nuevo+' por '+yo().nombre, t:new Date()});
