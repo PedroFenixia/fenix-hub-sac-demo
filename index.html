@@ -6,6 +6,7 @@
   --side-hover:#1b1d24; --side-rule:#22252e; --side-dim:#95a0b0;
   --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --gold-tint:#eaeef4;
   --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22);
+  --badge:#d92d20; --badge-txt:#ffffff;
   --ok:#1f7a52; --warn:#b5730a; --danger:#c0392b; --neutral:#6b7684;
   --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea; --neutral-bg:#eef1f5;
   --ticket:#4b46b8; --ticket-bg:#ecebfb;
@@ -20,7 +21,7 @@
     --ink:#f2f4f8; --text:#c3cad6; --muted:#8b94a3; --line:#2a2f3a;
     --bg:#111318; --surface:#181b22; --surface-2:#1d212a; --sidebar:#08090b;
     --side-txt:#aeb8c6; --side-hover:#1b1d24; --side-rule:#22252e;
-    --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
+    --badge:#f0503c; --badge-txt:#1a0d0b; --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
     --neutral-bg:#22262f; --ticket:#9d99ee; --ticket-bg:#20203a;
     --ok:#4bbd88; --warn:#e0a136; --danger:#e8695a; --neutral:#98a1ae;
     --vega:#6c9bf0; --climatiza:#3fc9b6; --electrosur:#e08a48;
@@ -31,7 +32,7 @@
   --ink:#f2f4f8; --text:#c3cad6; --muted:#8b94a3; --line:#2a2f3a;
   --bg:#111318; --surface:#181b22; --surface-2:#1d212a; --sidebar:#08090b;
   --side-txt:#aeb8c6; --side-hover:#1b1d24; --side-rule:#22252e;
-  --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
+  --badge:#f0503c; --badge-txt:#1a0d0b; --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
   --neutral-bg:#22262f; --ticket:#9d99ee; --ticket-bg:#20203a;
   --ok:#4bbd88; --warn:#e0a136; --danger:#e8695a; --neutral:#98a1ae;
   --vega:#6c9bf0; --climatiza:#3fc9b6; --electrosur:#e08a48;
@@ -40,7 +41,7 @@
 :root[data-theme="light"]{
   --ink:#151a21; --text:#3a434f; --muted:#8a94a1; --line:#e2e7ee;
   --bg:#eef1f5; --surface:#ffffff; --surface-2:#fbfcfd; --sidebar:#0a0b0d;
-  --gold-tint:#eaeef4; --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22); --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea;
+  --badge:#d92d20; --badge-txt:#ffffff; --gold-tint:#eaeef4; --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22); --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea;
   --neutral-bg:#eef1f5; --ticket:#4b46b8; --ticket-bg:#ecebfb;
   --ok:#1f7a52; --warn:#b5730a; --danger:#c0392b; --neutral:#6b7684;
   --vega:#2d6cdf; --climatiza:#12a594; --electrosur:#c0621b;
@@ -401,7 +402,7 @@ tbody tr:last-child td{border-bottom:none;}
 .statepick button:hover{border-color:var(--muted);}
 .statepick button.on{background:var(--ink); color:var(--surface); border-color:var(--ink);}
 .statepick button i{width:8px; height:8px; border-radius:50%;}
-.unread{display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px; padding:0 5px; border-radius:20px; background:var(--ticket); color:#fff; font-size:10.5px; font-weight:700; margin-left:7px; vertical-align:middle;}
+.unread{display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 6px; border-radius:20px; background:var(--badge); color:var(--badge-txt); font-size:11px; font-weight:800; margin-left:8px; vertical-align:middle; box-shadow:0 0 0 2px rgba(217,45,32,.2); font-variant-numeric:tabular-nums;}
 
 /* ---------- Tablero kanban ---------- */
 .board{display:grid; grid-template-columns:repeat(4,minmax(224px,1fr)); gap:14px; align-items:start; overflow-x:auto; padding-bottom:6px;}
@@ -465,8 +466,8 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .kpiact:hover{border-color:var(--muted);}
 .kpiact.on{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
 .kpiact.on::before{background:var(--gold);}
-.item .cnt.alerta{background:var(--warn); color:#0d1117;}
-.item.on .cnt.alerta{background:rgba(255,255,255,.28); color:var(--on-accent);}
+.item .cnt.alerta{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px rgba(217,45,32,.25);}
+.item.on .cnt.alerta{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px rgba(255,255,255,.35);}
 
 /* ---------- Barra de filtros en dos niveles ---------- */
 .filterbar{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
