@@ -569,6 +569,26 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 
 .colh .n.cero{background:var(--neutral-bg); color:var(--muted); box-shadow:none;}
 
+/* ---------- Alcance de la solución ---------- */
+.verpliego{width:100%; margin-top:14px; font-size:13px; font-weight:700; font-family:inherit; color:var(--gold-deep); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 14px; cursor:pointer;}
+.verpliego:hover{border-color:var(--gold); background:var(--gold-tint);}
+.alcance{max-width:940px; margin:0 auto; padding:34px 24px 70px;}
+.alcance h1{margin:0 0 10px; font-size:29px; font-weight:800; color:var(--ink); letter-spacing:-.4px; text-wrap:balance;}
+.alcance .lead{margin:0 0 30px; font-size:15px; line-height:1.6; color:var(--text); max-width:64ch;}
+.mods{display:grid; gap:16px;}
+.mod{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+.modh{display:flex; align-items:center; gap:12px; padding:15px 20px; border-bottom:1px solid var(--line); background:var(--surface-2); flex-wrap:wrap;}
+.modn{width:25px; height:25px; border-radius:7px; background:var(--gold); color:var(--on-accent); font-size:12.5px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.modh h2{margin:0; font-size:16px; font-weight:800; color:var(--ink);}
+.modnota{margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:4px 11px;}
+.mod ul{margin:0; padding:16px 20px; list-style:none; columns:2; column-gap:28px;}
+@media (max-width:680px){ .mod ul{columns:1;} .modnota{margin-left:0; width:100%;} }
+.mod li{position:relative; padding:0 0 9px 17px; font-size:13.5px; color:var(--text); line-height:1.5; break-inside:avoid;}
+.mod li::before{content:'·'; position:absolute; left:4px; top:-2px; color:var(--gold); font-size:19px; font-weight:800;}
+.alcfoot{margin-top:26px; padding:18px 20px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius);}
+.alcfoot p{margin:0; font-size:13px; color:var(--text); line-height:1.6;}
+.alcmini{margin-top:10px !important; font-size:11.5px !important; color:var(--muted) !important;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -1176,6 +1196,8 @@ function vPartes(){
 
   var totalVenta = ps.reduce(function(a,p){ return a+valorar(p).total; },0);
   var totalMargen = ps.reduce(function(a,p){ var v=valorar(p); return a+(v.total-(v.mat+v.costeMO)); },0);
+  var porFacturar = todos.filter(function(p){ return p.estado==='Confirmado'; });
+  var importeFacturar = porFacturar.reduce(function(a,p){ return a+valorar(p).total; },0);
 
   var filtros = ''
   + '<div class="filterbar"><div class="frow between"><div class="fgroup">'
@@ -1190,7 +1212,8 @@ function vPartes(){
   +     '<option value="all"'+(pEstado==='all'?' selected':'')+'>Todos</option>'
   +     ESTADOS_PARTE.map(function(e){
           var n = todos.filter(function(p){return p.estado===e;}).length;
-          return '<option value="'+e+'"'+(pEstado===e?' selected':'')+'>'+esc(e)+' ('+n+')</option>';
+          var etiq = e==='Confirmado' ? 'Confirmado · pendiente de facturar' : e;
+          return '<option value="'+e+'"'+(pEstado===e?' selected':'')+'>'+esc(etiq)+' ('+n+')</option>';
         }).join('')
   +   '</select></label>'
   +   '<label class="fsel"><span>Técnico</span><select id="pSelTec">'
@@ -1205,7 +1228,12 @@ function vPartes(){
   + '</div>'
   + '<div class="sumbox"><span>'+ps.length+' parte'+(ps.length===1?'':'s')+'</span>'
   +   '<b>'+eur(totalVenta)+'</b>'
-  +   '<span class="margin-chip'+(totalMargen<0?' neg':'')+'">margen '+eur(totalMargen)+'</span></div>'
+  +   '<span class="margin-chip'+(totalMargen<0?' neg':'')+'">margen '+eur(totalMargen)+'</span>'
+  +   (porFacturar.length && pEstado!=='Confirmado'
+        ? '<button class="badge2 b-pend" data-verfact="1" style="border:none;cursor:pointer;font-family:inherit">'
+          + porFacturar.length+' por facturar · '+eur(importeFacturar)+'</button>'
+        : '')
+  + '</div>'
   + '</div></div>';
 
   var pg = paginar(ps, 'partes');
@@ -1216,8 +1244,11 @@ function vPartes(){
       + '<td class="ref">'+esc(p.ref)+'</td>'
       + '<td><div class="as">'+esc(p.asunto)+'</div><div class="cl">'+esc(cliDe(p.cliente).nombre)+'</div></td>'
       + '<td>'+chipEmpresa(p.emp)+'</td>'
-      + '<td>'+chipEstado(p.estado)+'</td>'
-      + '<td><span class="tavatar">'+ini(p.tecnico)+'</span>'+esc(p.tecnico)+'</td>'
+      + '<td>'+chipEstado(p.estado)
+      +   (p.estado==='Confirmado'?' <span class="badge2 b-pend">por facturar</span>':'')
+      +   (p.estado==='Facturado'&&facturaDe(p.ref)?' <span class="mono" style="font-size:11.5px">'+esc(facturaDe(p.ref).doc)+'</span>':'')
+      + '</td>'
+      + '<td><span class="who2"><span class="tavatar">'+ini(p.tecnico)+'</span>'+esc(p.tecnico)+'</span></td>'
       + '<td class="r mono">'+horasTxt(p.horas)+'</td>'
       + '<td class="r amount">'+eur(v.total)+'</td></tr>';
   }).join('');
@@ -1375,6 +1406,68 @@ var portalAbiertos = {}, portalHistorico = false, portalQ = '';
 
 function vPortal(){ return ''; }
 
+var MODULOS = [
+  {n:'Facturación', nota:'hasta emisión de remesas', items:[
+    'Ficha de clientes y datos fiscales',
+    'Series y numeración automática de facturas',
+    'Proformas, facturas y rectificativas/abonos',
+    'Facturación recurrente y periódica',
+    'Generación de remesas SEPA para el banco',
+    'Integración automática con Contabilidad']},
+  {n:'Contabilidad', nota:'integrada con facturación', items:[
+    'Plan contable adaptado (PGC)',
+    'Asientos manuales y automáticos',
+    'Contabilización directa desde facturación',
+    'Libros diario y mayor',
+    'Balance de sumas y saldos y de situación',
+    'Cuenta de pérdidas y ganancias',
+    'Gestión y liquidación de IVA',
+    'Conciliación bancaria y cierres']},
+  {n:'Soporte a clientes', nota:'avisos · partes · inventario', items:[
+    'Portal de acceso para clientes',
+    'Avisos con categorías, prioridad y SLA',
+    'Asignación a técnicos y flujos de estado',
+    'Partes de trabajo generados desde los avisos',
+    'Registro de tiempos y actuaciones',
+    'Gestor de credenciales seguro por cliente',
+    'Inventario de dispositivos por cliente',
+    'Notificaciones y seguimiento al cliente']},
+  {n:'RRHH — Fenix HR', nota:'control horario y portal del empleado', items:[
+    'Gestión de empleados y expedientes',
+    'Control horario y fichajes',
+    'Gestión de vacaciones y ausencias',
+    'Portal del empleado',
+    'Documentación y comunicaciones internas',
+    'Informes de recursos humanos']}
+];
+
+function pintarAlcance(){
+  var host = id('portalWrap');
+  host.innerHTML = ''
+  + '<header class="phead"><div class="in">'
+  +   '<img src="'+LOGO+'" alt="">'
+  +   '<div class="nm"><b>Fenix IA Solutions</b><span>Plataforma de gestión integral</span></div>'
+  +   '<button class="exit" id="volverLogin">Volver al acceso</button>'
+  + '</div></header>'
+  + '<div class="alcance">'
+  +   '<h1>Alcance de la solución</h1>'
+  +   '<p class="lead">Una plataforma de gestión integral con cuatro módulos que comparten los mismos datos: lo que se factura sale de contabilidad, y el trabajo del equipo técnico llega desde el soporte a clientes.</p>'
+  +   '<div class="mods">'
+  +     MODULOS.map(function(m,i){
+          return '<section class="mod">'
+            + '<div class="modh"><span class="modn">'+(i+1)+'</span><h2>'+esc(m.n)+'</h2>'
+            +   '<span class="modnota">'+esc(m.nota)+'</span></div>'
+            + '<ul>'+m.items.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'
+            + '</section>';
+        }).join('')
+  +   '</div>'
+  +   '<div class="alcfoot">'
+  +     '<p><b>Este documento recoge el alcance funcional previsto.</b> El diseño y las funciones definitivas se concretan durante el desarrollo. Para condiciones económicas y plazos, solicita el presupuesto detallado.</p>'
+  +     '<p class="alcmini">Fenix IA Solutions S.L. · CIF B22739668 · C/ La Paz 83, 03320 Elche (Alicante) · fenixia.tech · +34 966 101 029</p>'
+  +   '</div>'
+  + '</div>';
+}
+
 function pintarLogin(){
   var host = id('portalWrap');
   host.innerHTML = ''
@@ -1393,6 +1486,7 @@ function pintarLogin(){
   +     '<input id="lgPass" type="password" placeholder="••••••••" value="demo1234">'
   +     '<button class="newbtn" id="lgBtn" type="submit" style="margin-top:18px;width:100%">Acceder</button>'
   +   '</form>'
+  +   '<button class="verpliego" id="verAlcance">Ver el alcance de la solución →</button>'
   +   '<p class="loginhint">Demostración · pulsa <b>Acceder</b> con cualquiera de estos correos:<br>'
   +     DB.clientes.map(function(c){ return '<button class="mailchip" data-mail="'+esc(c.contacto)+'">'+esc(c.contacto)+'</button>'; }).join('')
   +   '</p>'
@@ -1926,6 +2020,8 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
+  if(e.target.closest('[data-verfact]')){ pEstado='Confirmado'; pagina.partes=1; render();
+    toast('Partes confirmados, a la espera de emitir factura'); return; }
   var pb = e.target.closest('[data-pag]');
   if(pb && !pb.disabled){
     var d = pb.getAttribute('data-pag').split(':');
@@ -2031,6 +2127,8 @@ id('portalWrap').addEventListener('click', function(e){
     pintarPortal(); return;
   }
   if(e.target.closest('[data-hist]')){ portalHistorico = !portalHistorico; pintarPortal(); return; }
+  if(e.target.id==='verAlcance'){ pintarAlcance(); return; }
+  if(e.target.id==='volverLogin'){ pintarLogin(); return; }
   if(e.target.id==='portalLogout'){ portalDentro=false; portalQ=''; portalAbiertos={}; portalHistorico=false; pintarLogin(); toast('Sesión cerrada'); return; }
   var chip = e.target.closest('[data-mail]');
   if(chip){ id('lgMail').value = chip.getAttribute('data-mail'); entrarPortal(chip.getAttribute('data-mail')); return; }
