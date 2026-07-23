@@ -425,6 +425,16 @@ tbody tr:last-child td{border-bottom:none;}
 .colempty{padding:20px 10px; text-align:center; color:var(--muted); font-size:12px; border:1px dashed var(--line); border-radius:9px;}
 .boardhint{font-size:12.5px; color:var(--muted); margin:0 2px 14px; line-height:1.6;}
 
+/* ---------- Acciones de fila (al pasar el ratón) ---------- */
+.rowact{opacity:0; transition:opacity .12s; white-space:nowrap;}
+tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
+@media (hover:none){ .rowact{opacity:1;} }
+.viewpick{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+.viewpick button{font-size:12.5px; font-weight:600; color:var(--muted); padding:8px 15px; cursor:pointer; border:none; background:none; font-family:inherit; display:inline-flex; align-items:center; gap:7px;}
+.viewpick button.on{background:var(--gold); color:var(--on-accent); font-weight:700;}
+.viewpick svg{width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.toggle button[disabled]{opacity:.4; cursor:not-allowed;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -453,9 +463,7 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <div class="brandrule"></div>
     <nav class="nav" id="nav">
-      <button class="item on" data-view="bandeja"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M2 12h6l2 3h4l2-3h6"/></svg></span>Bandeja única</button>
-      <button class="item" data-view="cola"><span class="ic"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>Cola de entrada<span class="cnt" id="cntCola">0</span></button>
-      <button class="item" data-view="tablero"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg></span>Tablero<span class="cnt">0</span></button>
+      <button class="item on" data-view="bandeja"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M2 12h6l2 3h4l2-3h6"/></svg></span>Bandeja<span class="cnt" id="cntCola">0</span></button>
       <button class="item" data-view="partes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h4"/></svg></span>Partes de trabajo<span class="cnt" id="cntPartes">0</span></button>
       <button class="item" data-view="clientes"><span class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
       <button class="item" data-view="articulos"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></span>Artículos</button>
@@ -686,11 +694,10 @@ function chipEstado(est){
    ESTADO DE LA VISTA
    ============================================================ */
 var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
+var modo='lista', soloPend=false;
 var VIEWS = {
-  bandeja:    {title:'Bandeja única',      sub:'Todos los tickets y partes de trabajo, de todas las empresas', ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
-  cola:       {title:'Cola de entrada',    sub:'Tickets sin convertir, ordenados por vencimiento de SLA',       ph:'Buscar en la cola…',            btn:'+ Nuevo ticket',   act:'portal'},
-  tablero:    {title:'Tablero',            sub:'Avisos por estado · arrastra una tarjeta para moverla',         ph:'Buscar en el tablero…',         btn:'+ Nuevo ticket',   act:'portal'},
-  partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'cola'},
+  bandeja:    {title:'Bandeja',             sub:'Avisos y partes de trabajo de todas las empresas',              ph:'Buscar ticket, parte o cliente…', btn:'+ Nuevo ticket',   act:'portal'},
+  partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
   clientes:   {title:'Clientes',           sub:'Empresas cliente y su actividad',                               ph:'Buscar cliente…',               btn:'+ Nuevo cliente',  act:'demo'},
   articulos:  {title:'Artículos',          sub:'Catálogo de materiales y precios',                              ph:'Buscar artículo…',              btn:'+ Nuevo artículo', act:'demo'},
   almacen:    {title:'Almacén',            sub:'Existencias por almacén y control de mínimos',                   ph:'Buscar en almacén…',            btn:'+ Nuevo movimiento', act:'demo'},
@@ -723,37 +730,22 @@ function coincide(txt){ return q==='' || txt.toLowerCase().indexOf(q)>-1; }
 /* ============================================================
    RENDER DE CADA VISTA
    ============================================================ */
+function sinConvertir(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }
+
 function vBandeja(){
   var kpiAbiertos = DB.tickets.filter(function(t){return t.estado==='Abierto'||t.estado==='En curso';}).length;
   var kpiBorrador = DB.partes.filter(function(p){return puedeVer(p.emp) && p.estado==='Borrador';}).length;
   var kpiPend     = DB.partes.filter(function(p){return puedeVer(p.emp) && p.estado==='Confirmado';}).length;
   var kpiStock    = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock < a.min;}).length;
-
-  var fs = filas().filter(function(r){
-    if(!puedeVer(r.emp)) return false;
-    var okE = filtroEmp==='all' || r.emp===filtroEmp;
-    var okT = filtroTipo==='all' || r.tipo===filtroTipo;
-    return okE && okT && coincide(r.ref+' '+r.asunto+' '+r.cliente+' '+r.estado+' '+r.agente);
-  });
+  var pendientes  = DB.tickets.filter(sinConvertir).length;
 
   var pills = DB.empresas.filter(function(e){ return puedeVer(e.id); }).map(function(e){
     return '<button class="pill'+(filtroEmp===e.id?' on':'')+'" data-emp="'+e.id+'"><i style="background:'+e.color+'"></i>'+esc(e.nombre)+'</button>';
   }).join('');
 
-  var body = fs.map(function(r){
-    return '<tr data-open="'+r.tipo+':'+r.ref+'">'
-      + '<td><span class="tip '+r.tipo+'">'+(r.tipo==='ticket'?'<span class="d"></span>Ticket':'&#9656; Parte')+'</span></td>'
-      + '<td class="ref">'+esc(r.ref)+'</td>'
-      + '<td><div class="as">'+esc(r.asunto)+'</div><div class="cl">'+esc(r.cliente)+'</div></td>'
-      + '<td>'+chipEmpresa(r.emp)+'</td>'
-      + '<td>'+chipEstado(r.estado)+'</td>'
-      + '<td>'+esc(r.agente)+'</td>'
-      + '<td class="fch">'+esc(r.fecha)+'</td></tr>';
-  }).join('');
-
-  return ''
+  var cabecera = ''
   + '<div class="kpis">'
-  +   '<div class="kpi"><div class="n">'+kpiAbiertos+'</div><div class="l"><b>Tickets</b> abiertos</div></div>'
+  +   '<div class="kpi"><div class="n">'+kpiAbiertos+'</div><div class="l"><b>Avisos</b> abiertos</div></div>'
   +   '<div class="kpi k-amber"><div class="n">'+kpiBorrador+'</div><div class="l"><b>Partes</b> en borrador</div></div>'
   +   '<div class="kpi k-green"><div class="n">'+kpiPend+'</div><div class="l">Partes <b>pend. de facturar</b></div></div>'
   +   '<div class="kpi k-red"><div class="n">'+kpiStock+'</div><div class="l">Stock <b>bajo mínimos</b></div></div>'
@@ -761,49 +753,66 @@ function vBandeja(){
   + '<div class="filters">'
   +   '<div class="fl" id="empFilter"><span class="fllabel">Empresa:</span>'
   +     '<button class="pill'+(filtroEmp==='all'?' on':'')+'" data-emp="all">Todas</button>'+pills
+  +     '<button class="pill'+(soloPend?' on':'')+'" data-pend="1" style="margin-left:6px">Sin convertir'
+  +       (pendientes?' · '+pendientes:'')+'</button>'
   +   '</div>'
-  +   '<div class="toggle" id="typeToggle">'
-  +     '<button data-type="all" class="'+(filtroTipo==='all'?'on':'')+'">Todo</button>'
-  +     '<button data-type="ticket" class="'+(filtroTipo==='ticket'?'on':'')+'">Tickets</button>'
-  +     '<button data-type="parte" class="'+(filtroTipo==='parte'?'on':'')+'">Partes</button>'
+  +   '<div class="fl">'
+  +     '<div class="toggle" id="typeToggle">'
+  +       '<button data-type="all" class="'+(filtroTipo==='all'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Todo</button>'
+  +       '<button data-type="ticket" class="'+(filtroTipo==='ticket'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Avisos</button>'
+  +       '<button data-type="parte" class="'+(filtroTipo==='parte'?'on':'')+'"'+(modo==='tablero'?' disabled':'')+'>Partes</button>'
+  +     '</div>'
+  +     '<div class="viewpick" id="viewPick">'
+  +       '<button data-modo="lista" class="'+(modo==='lista'?'on':'')+'"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lista</button>'
+  +       '<button data-modo="tablero" class="'+(modo==='tablero'?'on':'')+'"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg>Tablero</button>'
+  +     '</div>'
   +   '</div>'
-  + '</div>'
-  + '<p class="rowcount">Mostrando '+fs.length+' de '+filas().length+' registros</p>'
+  + '</div>';
+
+  return cabecera + (modo==='tablero' ? cuerpoTablero() : cuerpoLista());
+}
+
+function cuerpoLista(){
+  var fs = filas().filter(function(r){
+    if(!puedeVer(r.emp)) return false;
+    if(soloPend && !(r.tipo==='ticket' && sinConvertir(ticketDe(r.ref)))) return false;
+    var okE = filtroEmp==='all' || r.emp===filtroEmp;
+    var okT = filtroTipo==='all' || r.tipo===filtroTipo;
+    return okE && okT && coincide(r.ref+' '+r.asunto+' '+r.cliente+' '+r.estado+' '+r.agente);
+  });
+  if(soloPend) fs.sort(function(a,b){
+    var ta=ticketDe(a.ref), tb=ticketDe(b.ref);
+    return (ta?slaDe(ta).restante:Infinity) - (tb?slaDe(tb).restante:Infinity);
+  });
+
+  var body = fs.map(function(r){
+    var t = r.tipo==='ticket' ? ticketDe(r.ref) : null;
+    var sla = t ? slaDe(t) : null;
+    return '<tr data-open="'+r.tipo+':'+r.ref+'">'
+      + '<td><span class="tip '+r.tipo+'">'+(r.tipo==='ticket'?'<span class="d"></span>Aviso':'&#9656; Parte')+'</span></td>'
+      + '<td class="ref">'+esc(r.ref)+'</td>'
+      + '<td><div class="as">'+esc(r.asunto)+(t&&sinLeer(t)?'<span class="unread" title="Esperando respuesta">1</span>':'')+'</div><div class="cl">'+esc(r.cliente)+'</div></td>'
+      + '<td>'+chipEmpresa(r.emp)+'</td>'
+      + '<td>'+chipEstado(r.estado)+'</td>'
+      + '<td>'+(sla ? '<span class="sla sla-'+sla.clase+'">'+esc(sla.txt)+'</span>' : '<span class="none">—</span>')+'</td>'
+      + '<td>'+esc(r.agente)+'</td>'
+      + '<td class="r">'+(t && sinConvertir(t)
+          ? '<span class="rowact"><button class="tbtn solid" data-convert="'+r.ref+'">Convertir en parte</button></span>'
+          : '<span class="fch">'+esc(r.fecha)+'</span>')+'</td></tr>';
+  }).join('');
+
+  return '<p class="rowcount">Mostrando '+fs.length+' de '+filas().length+' registros</p>'
   + '<div class="card clickable"><div class="tablewrap"><table>'
-  +   '<thead><tr><th>Tipo</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa que factura</th><th>Estado</th><th>Agente</th><th>Fecha</th></tr></thead>'
+  +   '<thead><tr><th>Tipo</th><th>Ref.</th><th>Asunto / Cliente</th><th>Empresa que factura</th><th>Estado</th><th>SLA</th><th>Agente</th><th class="r">Fecha</th></tr></thead>'
   +   '<tbody>'+body+'</tbody></table></div>'
   +   (fs.length?'':'<div class="blank"><div class="ico">◦</div><b>Nada que mostrar con este filtro</b><span>Cambia la empresa, el tipo o limpia el buscador.</span></div>')
   + '</div>'
-  + '<p class="cap">Los tickets no tienen empresa hasta que se convierten en parte. Al crear el parte se elige la empresa a mano — ese gesto fija quién factura, de qué almacén sale el material y con qué precio se valora.</p>';
+  + '<p class="cap">Los avisos no tienen empresa hasta que se convierten en parte. Al crear el parte se elige la empresa a mano — ese gesto fija quién factura, de qué almacén sale el material y con qué precio se valora.</p>';
 }
 
-function vCola(){
-  var pend = DB.tickets.filter(function(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); })
-    .filter(function(t){ return coincide(t.ref+' '+t.asunto+' '+cliDe(t.cliente).nombre); })
-    .sort(function(a,b){ return slaDe(a).restante - slaDe(b).restante; });
-
-  var body = pend.map(function(t){
-    var s = slaDe(t);
-    var c = cliDe(t.cliente);
-    return '<tr data-open="ticket:'+t.ref+'">'
-      + '<td class="ref">'+esc(t.ref)+'</td>'
-      + '<td><div class="as">'+esc(t.asunto)+(sinLeer(t)?'<span class="unread" title="Esperando respuesta">1</span>':'')+'</div><div class="sub">'+esc(t.area)+'</div></td>'
-      + '<td><div class="as" style="font-size:13px">'+esc(c.nombre)+'</div><div class="sub">'+esc(c.sector)+'</div></td>'
-      + '<td><span class="prio prio-'+t.prio+'">'+t.prio+'</span></td>'
-      + '<td><span class="sla sla-'+s.clase+'">'+esc(s.txt)+'</span></td>'
-      + '<td class="r"><button class="tbtn solid" data-convert="'+t.ref+'">Convertir en parte</button></td></tr>';
-  }).join('');
-
-  return '<p class="rowcount">'+pend.length+' tickets sin convertir · ordenados por vencimiento de SLA</p>'
-  + '<div class="card clickable"><div class="tablewrap"><table>'
-  + '<thead><tr><th>Ref.</th><th>Asunto</th><th>Cliente</th><th>Prioridad</th><th>SLA</th><th class="r">Acciones</th></tr></thead>'
-  + '<tbody>'+body+'</tbody></table></div>'
-  + (pend.length?'':'<div class="blank"><div class="ico">✓</div><b>Cola vacía</b><span>Todos los tickets se han convertido en parte de trabajo.</span></div>')+'</div>'
-  + '<p class="cap">La cola prioriza por SLA: primero lo vencido, luego lo que está en riesgo. Alta 4 h · Media 8 h · Baja 24 h, y se marca «en riesgo» cuando queda menos del 25 % del tiempo.</p>';
-}
-
-function vTablero(){
+function cuerpoTablero(){
   var ts = DB.tickets.filter(function(t){
+    if(soloPend && !sinConvertir(t)) return false;
     return coincide(t.ref+' '+t.asunto+' '+cliDe(t.cliente).nombre+' '+t.agente);
   });
   var cols = ESTADOS_TICKET.map(function(est){
@@ -811,7 +820,7 @@ function vTablero(){
                   .sort(function(a,b){ return slaDe(a).restante - slaDe(b).restante; });
     var cards = enCol.map(function(t){
       var s2 = slaDe(t), c = cliDe(t.cliente);
-      var yaTiene = DB.partes.some(function(p){return p.ticket===t.ref;});
+      var yaTiene = !sinConvertir(t);
       return '<article class="kc" draggable="true" data-kt="'+t.ref+'" data-open="ticket:'+t.ref+'">'
         + '<div class="kr"><span class="kref">'+esc(t.ref)+'</span>'
         +   '<span class="prio prio-'+t.prio+'">'+t.prio+'</span></div>'
@@ -827,7 +836,7 @@ function vTablero(){
       + '<div class="colb">'+(cards || '<div class="colempty">Nada aquí</div>')+'</div>'
       + '</section>';
   }).join('');
-  return '<p class="boardhint">Arrastra una tarjeta de columna para cambiar el estado del aviso. Dentro de cada columna, primero lo que antes vence.</p>'
+  return '<p class="boardhint">Arrastra una tarjeta de columna para cambiar el estado del aviso. Dentro de cada columna, primero lo que antes vence. El tablero muestra solo avisos; los partes están en la vista de lista.</p>'
   + '<div class="board" id="board">'+cols+'</div>';
 }
 
@@ -1032,7 +1041,7 @@ function vPortal(){
   + '</div></div>';
 }
 
-var RENDER = {bandeja:vBandeja, cola:vCola, tablero:vTablero, partes:vPartes, clientes:vClientes, articulos:vArticulos,
+var RENDER = {bandeja:vBandeja, partes:vPartes, clientes:vClientes, articulos:vArticulos,
               almacen:vAlmacen, facturacion:vFacturacion, portal:vPortal, empresas:vEmpresas, agentes:vAgentes};
 
 function render(){
@@ -1043,9 +1052,6 @@ function render(){
   id('newbtn').textContent = VIEWS[current].btn;
   var pend = DB.tickets.filter(function(t){ return !DB.partes.some(function(p){return p.ticket===t.ref;}); }).length;
   id('cntCola').textContent = pend;
-  var abiertos = DB.tickets.filter(function(t){ return t.estado!=='Cerrado'; }).length;
-  var cb = document.querySelector('#nav .item[data-view="tablero"] .cnt');
-  if(cb) cb.textContent = abiertos;
   id('cntPartes').textContent = DB.partes.filter(function(p){return puedeVer(p.emp);}).length;
   id('cntStock').textContent = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock<a.min;}).length;
   var a = yo(), n = misEmpresas().length;
@@ -1264,7 +1270,7 @@ function crearParte(){
   t.estado = 'En curso';
   cerrarModal();
   toast('Parte '+ref+' creado · factura '+e.nombre);
-  current = 'partes'; render();
+  soloPend = false; current = 'partes'; render();
   abrirParte(ref);
 }
 
@@ -1291,11 +1297,17 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
+  var pend = e.target.closest('[data-pend]');
+  if(pend){ soloPend = !soloPend; render(); return; }
+
+  var mp = e.target.closest('#viewPick button');
+  if(mp){ modo = mp.getAttribute('data-modo'); render(); return; }
+
   var pill = e.target.closest('#empFilter .pill');
-  if(pill){ filtroEmp = pill.getAttribute('data-emp'); render(); return; }
+  if(pill && pill.getAttribute('data-emp')){ filtroEmp = pill.getAttribute('data-emp'); render(); return; }
 
   var tg = e.target.closest('#typeToggle button');
-  if(tg){ filtroTipo = tg.getAttribute('data-type'); render(); return; }
+  if(tg){ if(tg.disabled) return; filtroTipo = tg.getAttribute('data-type'); render(); return; }
 
   var cliBtn = e.target.closest('[data-cli]');
   if(cliBtn){ portalCli = cliBtn.getAttribute('data-cli'); render(); return; }
@@ -1479,9 +1491,10 @@ id('userBtn').addEventListener('click', function(){
 id('newbtn').addEventListener('click', function(){
   var v = VIEWS[current];
   if(v.act==='portal'){ show('portal'); toast('Crea el ticket desde el portal de cliente'); return; }
-  if(v.act==='cola'){
-    show('cola');
-    toast('Un parte nace de un ticket: elige uno y pulsa «Convertir en parte»');
+  if(v.act==='pendientes'){
+    current='bandeja'; modo='lista'; soloPend=true; filtroTipo='all'; q=''; id('search').value='';
+    render();
+    toast('Un parte nace de un aviso: elige uno y pulsa «Convertir en parte»');
     return;
   }
   if(v.act==='facturar'){
@@ -1503,7 +1516,7 @@ function toast(m){
 
 /* SLA en vivo: refresca los badges cada minuto */
 setInterval(function(){
-  if(current==='cola'||current==='bandeja'||current==='portal') render();
+  if(current==='bandeja'||current==='portal') render();
 }, 60000);
 
 render();
