@@ -534,6 +534,14 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .mailchip{font-size:11.5px; font-family:inherit; color:var(--text); background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:4px 10px; margin:3px 4px 0 0; cursor:pointer;}
 .mailchip:hover{border-color:var(--gold); color:var(--gold-deep);}
 
+.who2{display:inline-flex; align-items:center; white-space:nowrap;}
+.tavatar.sm{width:19px; height:19px; font-size:8.5px; margin-right:5px;}
+.lrwho{display:inline-flex; align-items:center; font-size:11.5px; color:var(--muted); margin-left:auto;}
+.lrwho .tavatar{width:18px; height:18px; font-size:8px; margin-right:4px;}
+
+tbody tr.filaccion td:first-child{box-shadow:inset 3px 0 0 var(--warn);}
+tbody tr.corte td{border-top:2px solid var(--line);}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -898,6 +906,7 @@ function chipEstado(est){
 var current='bandeja', filtroEmp='all', filtroTipo='all', q='';
 var modo='lista', filtroEstado='all';
 var pEmp='all', pEstado='all', pTecnico='all';
+var fSoloPend=false, aSoloBajos=false;
 var VIEWS = {
   bandeja:    {title:'Bandeja',             sub:'Avisos y partes de trabajo de todas las empresas',              ph:'Buscar aviso, parte o cliente…', btn:'+ Nuevo aviso',   act:'portal'},
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
@@ -918,14 +927,20 @@ function filas(){
   DB.tickets.forEach(function(t){
     out.push({tipo:'ticket', ref:t.ref, asunto:t.asunto, cliente:cliDe(t.cliente).nombre,
               emp:null, estado:t.estado, agente:t.agente, orden:t.creado.getTime(),
+              accion:requiereAccion(t),
               fecha:fechaHora(t.creado), titulo:haceQue(t.creado)});
   });
   DB.partes.forEach(function(p){
     out.push({tipo:'parte', ref:p.ref, asunto:p.asunto, cliente:cliDe(p.cliente).nombre,
-              emp:p.emp, estado:p.estado, agente:p.tecnico, orden:0,
+              emp:p.emp, estado:p.estado, agente:p.tecnico,
+              orden:p.creado?p.creado.getTime():0, accion:false,
               fecha:p.creado?fechaHora(p.creado):p.fecha, titulo:p.creado?haceQue(p.creado):''});
   });
-  return out.sort(function(a,b){ return b.ref.localeCompare(a.ref); });
+  /* Lo que requiere acción va arriba; dentro de cada bloque, lo más reciente primero. */
+  return out.sort(function(a,b){
+    if(a.accion !== b.accion) return a.accion ? -1 : 1;
+    return b.orden - a.orden;
+  });
 }
 function vacio(titulo, pista){
   return '<div class="card"><div class="blank"><div class="ico">◦</div><b>'+esc(titulo)+'</b><span>'+esc(pista)+'</span></div></div>';
@@ -969,9 +984,9 @@ function vBandeja(){
   + '<div class="kpis">'
   +   '<button class="kpi kpiact'+(kpiAccion?' k-amber':'')+(filtroEstado==='accion'?' on':'')+'" data-estf="accion">'
   +     '<div class="n">'+kpiAccion+'</div><div class="l">Avisos <b>que requieren acción</b></div></button>'
-  +   '<div class="kpi"><div class="n">'+kpiEspera+'</div><div class="l">Esperando al <b>cliente</b></div></div>'
-  +   '<div class="kpi k-green"><div class="n">'+kpiPend+'</div><div class="l">Partes <b>pend. de facturar</b></div></div>'
-  +   '<div class="kpi k-red"><div class="n">'+kpiStock+'</div><div class="l">Stock <b>bajo mínimos</b></div></div>'
+  +   '<button class="kpi kpiact" data-estf="Esperando al cliente"><div class="n">'+kpiEspera+'</div><div class="l">Esperando al <b>cliente</b></div></button>'
+  +   '<button class="kpi kpiact k-green" data-kpi="facturar"><div class="n">'+kpiPend+'</div><div class="l">Partes <b>pend. de facturar</b></div></button>'
+  +   '<button class="kpi kpiact k-red" data-kpi="stock"><div class="n">'+kpiStock+'</div><div class="l">Stock <b>bajo mínimos</b></div></button>'
   + '</div>'
   + '<div class="filterbar">'
   +   '<div class="frow between">'
@@ -1023,15 +1038,12 @@ function cuerpoLista(){
     var okT = filtroTipo==='all' || r.tipo===filtroTipo;
     return okE && okT && coincide(r.ref+' '+r.asunto+' '+r.cliente+' '+r.estado+' '+r.agente);
   });
-  if(filtroEstado!=='all') fs.sort(function(a,b){
-    var ta=ticketDe(a.ref), tb=ticketDe(b.ref);
-    return (ta?slaDe(ta).restante:Infinity) - (tb?slaDe(tb).restante:Infinity);
-  });
-
-  var body = fs.map(function(r){
+  var primeroSinAccion = fs.findIndex(function(r){ return !r.accion; });
+  var body = fs.map(function(r,i){
     var t = r.tipo==='ticket' ? ticketDe(r.ref) : null;
     var sla = t ? slaDe(t) : null;
-    return '<tr data-open="'+r.tipo+':'+r.ref+'">'
+    var cls = (r.accion?'filaccion ':'') + (i===primeroSinAccion && primeroSinAccion>0 ?'corte':'');
+    return '<tr data-open="'+r.tipo+':'+r.ref+'"'+(cls.trim()?' class="'+cls.trim()+'"':'')+'>'
       + '<td class="fch nowrap" title="'+esc(r.titulo)+'">'+esc(r.fecha)+'</td>'
       + '<td><span class="tip '+r.tipo+'">'+(r.tipo==='ticket'?'<span class="d"></span>Aviso':'&#9656; Parte')+'</span></td>'
       + '<td class="ref">'+esc(r.ref)+'</td>'
@@ -1039,7 +1051,9 @@ function cuerpoLista(){
       + '<td>'+chipEmpresa(r.emp)+'</td>'
       + '<td>'+chipEstado(r.estado)+'</td>'
       + '<td>'+(sla ? '<span class="sla sla-'+sla.clase+'">'+esc(sla.txt)+'</span>' : '<span class="none">—</span>')+'</td>'
-      + '<td>'+esc(r.agente)+'</td>'
+      + '<td>'+(r.agente&&r.agente!=='Sin asignar'
+          ? '<span class="who2"><span class="tavatar">'+ini(r.agente)+'</span>'+esc(r.agente)+'</span>'
+          : '<span class="none">sin asignar</span>')+'</td>'
       + '<td class="r">'+(t && sinConvertir(t)
           ? '<span class="rowact"><button class="tbtn solid" data-convert="'+r.ref+'">Convertir en parte</button></span>'
           : '')+'</td></tr>';
@@ -1071,7 +1085,9 @@ function cuerpoTablero(){
         + '<div class="kcli">'+esc(c.nombre)+'</div>'
         + '<div class="kf"><span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span>'
         +   (yaTiene?'<span class="tip parte" style="font-size:11px;padding:3px 8px">&#9656; Parte</span>':'')
-        +   '<span class="kag">'+esc(t.agente)+'</span></div>'
+        +   '<span class="kag">'+(t.agente&&t.agente!=='Sin asignar'
+              ? '<span class="tavatar sm">'+ini(t.agente)+'</span>'+esc(t.agente)
+              : 'sin asignar')+'</span></div>'
         + '</article>';
     }).join('');
     var accion = ESTADOS_ACCION.indexOf(est)>-1;
@@ -1184,9 +1200,10 @@ function vArticulos(){
 }
 
 function vAlmacen(){
-  var as = DB.articulos.filter(function(a){ return puedeVer(a.emp) && coincide(a.nombre); })
+  var todosA = DB.articulos.filter(function(a){ return puedeVer(a.emp); });
+  var bajos = todosA.filter(function(a){return a.stock<a.min;}).length;
+  var as = todosA.filter(function(a){ return (!aSoloBajos || a.stock<a.min) && coincide(a.nombre); })
     .slice().sort(function(x,y){ return (x.stock<x.min?0:1)-(y.stock<y.min?0:1); });
-  var bajos = DB.articulos.filter(function(a){return puedeVer(a.emp) && a.stock<a.min;}).length;
   var body = as.map(function(a){
     var bajo = a.stock < a.min;
     return '<tr><td class="as">'+esc(a.nombre)+'</td><td>'+chipEmpresa(a.emp)+'</td>'
@@ -1195,14 +1212,22 @@ function vAlmacen(){
           ? '<span class="est low"><i style="background:var(--danger)"></i>Bajo mínimo</span>'
           : '<span class="est"><i style="background:var(--ok)"></i>OK</span>')+'</td></tr>';
   }).join('');
-  return '<p class="rowcount">'+bajos+' artículos por debajo del mínimo — reposición recomendada.</p>'
+  return '<div class="filterbar"><div class="frow between"><div class="fgroup">'
+  +   '<label class="fsel"><span>Mostrar</span><select id="aSel">'
+  +     '<option value="all"'+(aSoloBajos?'':' selected')+'>Todos los artículos ('+todosA.length+')</option>'
+  +     '<option value="bajos"'+(aSoloBajos?' selected':'')+'>Solo bajo mínimo ('+bajos+')</option>'
+  +   '</select></label>'
+  + '</div></div></div>'
   + '<div class="card"><div class="tablewrap"><table>'
   + '<thead><tr><th>Artículo</th><th>Almacén</th><th class="r">Stock</th><th class="r">Mínimo</th><th>Estado</th></tr></thead>'
   + '<tbody>'+body+'</tbody></table></div>'+(as.length?'':'<div class="blank"><div class="ico">◦</div><b>Sin existencias que mostrar</b><span>Prueba con otro artículo.</span></div>')+'</div>';
 }
 
 function vFacturacion(){
-  var rows = DB.partes.filter(function(p){ return puedeVer(p.emp) && (p.estado==='Confirmado'||p.estado==='Facturado'); })
+  var todas = DB.partes.filter(function(p){ return puedeVer(p.emp) && (p.estado==='Confirmado'||p.estado==='Facturado'); });
+  var nPend = todas.filter(function(p){ return !facturaDe(p.ref); }).length;
+  var rows = todas
+    .filter(function(p){ return !fSoloPend || !facturaDe(p.ref); })
     .filter(function(p){ var f=facturaDe(p.ref); return coincide(p.ref+' '+cliDe(p.cliente).nombre+' '+(f?f.doc:'')); });
   var body = rows.map(function(p){
     var f = facturaDe(p.ref), v = valorar(p);
@@ -1212,7 +1237,13 @@ function vFacturacion(){
       + '<td>'+chipEmpresa(p.emp)+'</td><td class="r amount">'+eur(v.total)+'</td>'
       + '<td>'+(f?'<span class="badge2 b-em">'+esc(f.estado)+'</span>':'<span class="badge2 b-pend">Pend. de facturar</span>')+'</td></tr>';
   }).join('');
-  return '<div class="card clickable"><div class="tablewrap"><table>'
+  return '<div class="filterbar"><div class="frow between"><div class="fgroup">'
+  +   '<label class="fsel"><span>Mostrar</span><select id="fSel">'
+  +     '<option value="all"'+(fSoloPend?'':' selected')+'>Todo ('+todas.length+')</option>'
+  +     '<option value="pend"'+(fSoloPend?' selected':'')+'>Solo pendientes de facturar ('+nPend+')</option>'
+  +   '</select></label>'
+  + '</div></div></div>'
+  + '<div class="card clickable"><div class="tablewrap"><table>'
   + '<thead><tr><th>Documento</th><th>Parte</th><th>Cliente</th><th>Empresa</th><th class="r">Importe</th><th>Estado</th></tr></thead>'
   + '<tbody>'+body+'</tbody></table></div>'+(rows.length?'':'<div class="blank"><div class="ico">✓</div><b>Nada pendiente de facturar</b><span>Confirma un parte para que aparezca aquí.</span></div>')+'</div>'
   + '<p class="cap">Cada empresa emite con su propia serie de factura (V-2026, C-2026, E-2026). El importe del parte se valora con la tarifa y el almacén de la empresa que factura.</p>';
@@ -1422,7 +1453,9 @@ function render(){
 }
 function show(v){
   if(v==='portal'){ current='portal'; abrirPortal(); return; }
-  current=v; q=''; id('search').value=''; render();
+  current=v; q=''; id('search').value='';
+  fSoloPend=false; aSoloBajos=false;
+  render();
 }
 
 /* ============================================================
@@ -1508,7 +1541,9 @@ function abrirCliente(cid){
     return '<button class="linkrow" data-goto="ticket:'+t.ref+'">'
       + '<span class="lr1"><b>'+esc(t.asunto)+'</b><span class="lrref">'+esc(t.ref)+'</span></span>'
       + '<span class="lr2">'+chipEstado(t.estado)
-      +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span></span></button>';
+      +   '<span class="sla sla-'+s2.clase+'">'+esc(s2.txt)+'</span>'
+      +   (t.agente&&t.agente!=='Sin asignar'?'<span class="lrwho"><span class="tavatar">'+ini(t.agente)+'</span>'+esc(t.agente)+'</span>':'')
+      + '</span></button>';
   }).join('') : '<p class="vacio">Sin avisos.</p>';
 
   var listaPartes = partes.length ? partes.map(function(p){
@@ -1784,6 +1819,16 @@ id('viewRoot').addEventListener('click', function(e){
   var conv = e.target.closest('[data-convert]');
   if(conv){ e.stopPropagation(); abrirModal(conv.getAttribute('data-convert')); return; }
 
+  var kb = e.target.closest('[data-kpi]');
+  if(kb){
+    var k = kb.getAttribute('data-kpi');
+    if(k==='borrador'){ current='partes'; pEmp='all'; pEstado='Borrador'; pTecnico='all'; q=''; id('search').value=''; render();
+      toast('Partes en borrador · sin confirmar todavía'); return; }
+    if(k==='facturar'){ current='facturacion'; fSoloPend=true; q=''; id('search').value=''; render();
+      toast('Partes confirmados pendientes de facturar'); return; }
+    if(k==='stock'){ current='almacen'; aSoloBajos=true; q=''; id('search').value=''; render();
+      toast('Artículos por debajo del mínimo'); return; }
+  }
   var kp = e.target.closest('[data-estf]');
   if(kp){ filtroEstado = kp.getAttribute('data-estf'); if(filtroTipo==='parte') filtroTipo='all'; render(); return; }
   if(e.target.id==='clearF'){ filtroEmp='all'; filtroEstado='all'; filtroTipo='all'; render(); return; }
@@ -1826,6 +1871,8 @@ id('viewRoot').addEventListener('change', function(e){
   if(e.target.id==='pSelEmp'){ pEmp = e.target.value; render(); return; }
   if(e.target.id==='pSelEst'){ pEstado = e.target.value; render(); return; }
   if(e.target.id==='pSelTec'){ pTecnico = e.target.value; render(); return; }
+  if(e.target.id==='fSel'){ fSoloPend = e.target.value==='pend'; render(); return; }
+  if(e.target.id==='aSel'){ aSoloBajos = e.target.value==='bajos'; render(); return; }
 });
 id('portalWrap').addEventListener('submit', function(e){
   if(e.target.id==='loginForm'){ e.preventDefault(); entrarPortal(id('lgMail').value); }
