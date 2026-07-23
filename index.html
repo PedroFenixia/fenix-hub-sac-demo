@@ -700,7 +700,7 @@ var VIEWS = {
   partes:     {title:'Partes de trabajo',  sub:'Partes con técnico, mano de obra e importe',                    ph:'Buscar parte…',                 btn:'+ Nuevo parte',    act:'pendientes'},
   clientes:   {title:'Clientes',           sub:'Empresas cliente y su actividad',                               ph:'Buscar cliente…',               btn:'+ Nuevo cliente',  act:'demo'},
   articulos:  {title:'Artículos',          sub:'Catálogo de materiales y precios',                              ph:'Buscar artículo…',              btn:'+ Nuevo artículo', act:'demo'},
-  almacen:    {title:'Almacén',            sub:'Existencias por almacén y control de mínimos',                   ph:'Buscar en almacén…',            btn:'+ Nuevo movimiento', act:'demo'},
+  almacen:    {title:'Almacén',            sub:'Existencias por almacén y control de mínimos',                   ph:'Buscar en almacén…',            btn:'+ Entrada de almacén', act:'stock'},
   facturacion:{title:'Facturación',        sub:'Partes facturados y pendientes de facturar',                    ph:'Buscar factura o parte…',       btn:'+ Nueva factura',  act:'facturar'},
   portal:     {title:'Portal de cliente',  sub:'Vista del cliente para crear y seguir sus tickets',             ph:'Buscar en el portal…',          btn:'+ Nuevo ticket',   act:'portal'},
   empresas:   {title:'Empresas',           sub:'Sociedades que facturan, cada una con su almacén y serie',      ph:'Buscar empresa…',               btn:'+ Nueva empresa',  act:'demo'},
@@ -1241,10 +1241,13 @@ function cerrarDrawer(){ id('overlay').classList.remove('show'); id('drawer').cl
 /* ============================================================
    MODAL  —  elegir empresa al convertir  (la regla central)
    ============================================================ */
-var modalTicket = null, modalEmp = null;
+var modalTicket = null, modalEmp = null, modalTipo = 'parte';
 
 function abrirModal(ref){
   var t = ticketDe(ref); if(!t) return;
+  modalTipo = 'parte';
+  id('mTitle').textContent = 'Convertir en parte de trabajo';
+  id('mOk').textContent = 'Crear parte';
   modalTicket = ref;
   modalEmp = cliDe(t.cliente).habitual;
   if(!puedeVer(modalEmp)) modalEmp = misEmpresas()[0];
@@ -1257,6 +1260,58 @@ function abrirModal(ref){
   id('modal').classList.add('show');
 }
 function cerrarModal(){ id('modal').classList.remove('show'); modalTicket=null; }
+
+var MOTIVOS = ['Compra a proveedor','Devolución de obra','Regularización de inventario','Traspaso entre almacenes'];
+
+function abrirModalStock(){
+  modalTipo = 'stock';
+  var arts = DB.articulos.filter(function(a){ return puedeVer(a.emp); });
+  if(!arts.length){ toast('No tienes almacenes asignados'); return; }
+  var bajos = arts.filter(function(a){ return a.stock < a.min; });
+  var sug = bajos.length ? bajos[0] : arts[0];
+  id('mTitle').textContent = 'Entrada de almacén';
+  id('mOk').textContent = 'Registrar entrada';
+  id('mSub').innerHTML = bajos.length
+    ? 'Hay <b>'+bajos.length+' artículo'+(bajos.length===1?'':'s')+'</b> por debajo del mínimo. Registra la entrada y el stock se actualiza al momento.'
+    : 'Registra material que entra en el almacén. El stock se actualiza al momento.';
+  id('mBody').innerHTML = ''
+    + '<div class="pform">'
+    +   '<label for="stArt">Artículo</label>'
+    +   '<select id="stArt">'+arts.map(function(a){
+          var falta = a.stock < a.min;
+          return '<option value="'+a.cod+'"'+(a.cod===sug.cod?' selected':'')+'>'
+            + esc(a.nombre)+' · '+esc(empDe(a.emp).corto)+' · stock '+a.stock+(falta?' (bajo mínimo '+a.min+')':'')+'</option>';
+        }).join('')+'</select>'
+    +   '<div class="prow2">'
+    +     '<div><label for="stCant">Cantidad que entra</label><input id="stCant" type="number" min="0.1" step="0.1" value="'+Math.max(1, sug.min-sug.stock)+'"></div>'
+    +     '<div><label for="stMot">Motivo</label><select id="stMot">'+MOTIVOS.map(function(m){return '<option>'+esc(m)+'</option>';}).join('')+'</select></div>'
+    +   '</div>'
+    +   '<p class="prio-hint" id="stHint"></p>'
+    + '</div>';
+  pintarHintStock();
+  id('modal').classList.add('show');
+}
+
+function pintarHintStock(){
+  var el = id('stHint'); if(!el) return;
+  var a = artDe(id('stArt').value), c = parseFloat(id('stCant').value)||0;
+  var fin = a.stock + c;
+  el.innerHTML = 'Quedará en <b>'+ (Math.round(fin*10)/10) +'</b> unidades · mínimo '+a.min+' · '
+    + (fin < a.min
+        ? '<span style="color:var(--danger)">sigue bajo mínimo</span>'
+        : '<span style="color:var(--ok)">por encima del mínimo</span>');
+}
+
+function registrarEntrada(){
+  var a = artDe(id('stArt').value);
+  var c = parseFloat(id('stCant').value)||0;
+  if(c <= 0){ toast('Indica una cantidad mayor que cero'); id('stCant').focus(); return; }
+  var antes = a.stock;
+  a.stock = Math.round((a.stock + c)*10)/10;
+  cerrarModal();
+  toast(a.nombre+' · '+antes+' → '+a.stock+' unidades');
+  current='almacen'; render();
+}
 
 function crearParte(){
   var t = ticketDe(modalTicket), e = empDe(modalEmp);
@@ -1413,6 +1468,16 @@ id('dBody').addEventListener('click', function(e){
   if(convd){ abrirModal(convd.getAttribute('data-convert')); }
 });
 
+id('modal').addEventListener('input', function(e){
+  if(e.target.id==='stCant') pintarHintStock();
+});
+id('modal').addEventListener('change', function(e){
+  if(e.target.id==='stArt'){
+    var a = artDe(e.target.value);
+    id('stCant').value = Math.max(1, a.min - a.stock);
+    pintarHintStock();
+  }
+});
 id('modal').addEventListener('click', function(e){
   var pick = e.target.closest('[data-pick]');
   if(pick){
@@ -1425,7 +1490,7 @@ id('modal').addEventListener('click', function(e){
   if(e.target===id('modal')) cerrarModal();
 });
 id('mCancel').addEventListener('click', cerrarModal);
-id('mOk').addEventListener('click', crearParte);
+id('mOk').addEventListener('click', function(){ modalTipo==='stock' ? registrarEntrada() : crearParte(); });
 
 id('dClose').addEventListener('click', cerrarDrawer);
 id('overlay').addEventListener('click', cerrarDrawer);
@@ -1497,6 +1562,7 @@ id('newbtn').addEventListener('click', function(){
     toast('Un parte nace de un aviso: elige uno y pulsa «Convertir en parte»');
     return;
   }
+  if(v.act==='stock'){ abrirModalStock(); return; }
   if(v.act==='facturar'){
     var pend = DB.partes.filter(function(p){ return p.estado==='Confirmado'; });
     if(pend.length){ abrirParte(pend[0].ref); toast('Factura desde el parte, con la serie de su empresa'); }
