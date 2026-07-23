@@ -589,6 +589,35 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .alcfoot p{margin:0; font-size:13px; color:var(--text); line-height:1.6;}
 .alcmini{margin-top:10px !important; font-size:11.5px !important; color:var(--muted) !important;}
 
+/* ---------- Condiciones económicas ---------- */
+.alch2{margin:38px 0 10px; font-size:21px; font-weight:800; color:var(--ink); letter-spacing:-.2px;}
+.fases{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0 22px;}
+@media (max-width:680px){ .fases{grid-template-columns:1fr;} }
+.fase{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+.faseh{display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:14px 18px; background:var(--ink); color:#fff; flex-wrap:wrap;}
+.fase.op .faseh{background:var(--ok);}
+.faseh b{font-size:14px; font-weight:800;}
+.faseh span{font-size:10.5px; letter-spacing:.8px; text-transform:uppercase; opacity:.75;}
+.tarifas{width:100%; border-collapse:collapse; min-width:0;}
+.tarifas td{padding:10px 18px; font-size:13.5px; color:var(--text); border-bottom:1px solid var(--line);}
+.tarifas td.r{text-align:right; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.tarifas tr:last-child td{border-bottom:none;}
+.faseft{margin:0; padding:11px 18px; font-size:11.5px; color:var(--muted); background:var(--surface-2); border-top:1px solid var(--line);}
+.cond{margin:0 0 4px; padding:0; list-style:none;}
+.cond li{position:relative; padding:0 0 10px 18px; font-size:13.5px; color:var(--text); line-height:1.6;}
+.cond li::before{content:"·"; position:absolute; left:4px; top:-3px; color:var(--gold); font-size:20px; font-weight:800;}
+.cond b{color:var(--ink);}
+
+/* ---------- Alcance dentro de la bienvenida ---------- */
+.wveralc{width:100%; margin:4px 0 16px; font-size:13.5px; font-weight:700; font-family:inherit; color:#e7ecf3; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:11px; padding:13px 16px; cursor:pointer;}
+.wveralc:hover{background:rgba(255,255,255,.12); border-color:#c8d2e0;}
+.welcalc{display:none; margin-top:20px; background:var(--bg); border-radius:14px; overflow:hidden;}
+.welcalc.open{display:block;}
+.welcalc .alcance{padding:26px 26px 34px;}
+.welcalc .alcance h1{font-size:23px;}
+.welcalc .alcance .lead{font-size:14px;}
+.welcome{align-items:flex-start; padding-top:40px; padding-bottom:40px;}
+
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); font-size:13px; padding:11px 18px; border-radius:10px;
@@ -672,7 +701,9 @@ tbody tr.corte td{border-top:2px solid var(--line);}
         <button data-user="pedro"><span class="av">PR</span><span><b>Pedro R. · Administrador</b><span>Las tres empresas</span></span></button>
       </div>
     </div>
+    <button class="wveralc" id="verAlcanceIni" aria-expanded="false">▾ Ver alcance y condiciones económicas</button>
     <p class="wfoot">Demostración con datos de ejemplo. Puedes cambiar de usuario en cualquier momento desde el pie del menú lateral.</p>
+    <div class="welcalc" id="welcomeAlc"></div>
   </div>
 </div>
 
@@ -1281,7 +1312,8 @@ function vClientes(){
 
 function vArticulos(){
   var as = DB.articulos.filter(function(a){ return puedeVer(a.emp) && coincide(a.cod+' '+a.nombre+' '+a.cat); });
-  var body = as.map(function(a){
+  var pg = paginar(as, 'articulos');
+  var body = pg.items.map(function(a){
     var bajo = a.stock < a.min;
     return '<tr><td class="ref">'+esc(a.cod)+'</td><td class="as">'+esc(a.nombre)+'</td><td>'+esc(a.cat)+'</td>'
       + '<td>'+chipEmpresa(a.emp)+'</td>'
@@ -1300,7 +1332,8 @@ function vAlmacen(){
   var bajos = todosA.filter(function(a){return a.stock<a.min;}).length;
   var as = todosA.filter(function(a){ return (!aSoloBajos || a.stock<a.min) && coincide(a.nombre); })
     .slice().sort(function(x,y){ return (x.stock<x.min?0:1)-(y.stock<y.min?0:1); });
-  var body = as.map(function(a){
+  var pg = paginar(as, 'almacen');
+  var body = pg.items.map(function(a){
     var bajo = a.stock < a.min;
     return '<tr><td class="as">'+esc(a.nombre)+'</td><td>'+chipEmpresa(a.emp)+'</td>'
       + '<td class="r num">'+a.stock+'</td><td class="r num">'+a.min+'</td>'
@@ -1444,14 +1477,8 @@ var MODULOS = [
     'Informes de recursos humanos']}
 ];
 
-function pintarAlcance(){
-  var host = id('portalWrap');
-  host.innerHTML = ''
-  + '<header class="phead"><div class="in">'
-  +   '<img src="'+LOGO+'" alt="">'
-  +   '<div class="nm"><b>Fenix IA Solutions</b><span>Plataforma de gestión integral</span></div>'
-  +   '<button class="exit" id="volverLogin">Volver al acceso</button>'
-  + '</div></header>'
+function contenidoAlcance(){
+  return ''
   + '<div class="alcance">'
   +   '<h1>Alcance de la solución</h1>'
   +   '<p class="lead">Una plataforma de gestión integral con cuatro módulos que comparten los mismos datos: lo que se factura sale de contabilidad, y el trabajo del equipo técnico llega desde el soporte a clientes.</p>'
@@ -1464,11 +1491,54 @@ function pintarAlcance(){
             + '</section>';
         }).join('')
   +   '</div>'
+  +   '<h2 class="alch2">Condiciones económicas</h2>'
+  +   '<p class="lead">La inversión se estructura <b>por usuario y por módulo</b>, en dos fases. La implantación no supone coste adicional: queda cubierta por la cuota de la fase de implementación.</p>'
+  +   '<div class="fases">'
+  +     '<div class="fase">'
+  +       '<div class="faseh"><b>Fase de implementación</b><span>hasta 6 meses</span></div>'
+  +       '<table class="tarifas"><tbody>'
+  +         '<tr><td>Facturación</td><td class="r">50,00 €</td></tr>'
+  +         '<tr><td>Contabilidad</td><td class="r">50,00 €</td></tr>'
+  +         '<tr><td>Soporte a clientes</td><td class="r">50,00 €</td></tr>'
+  +         '<tr><td>RRHH — Fenix HR</td><td class="r">50,00 €</td></tr>'
+  +       '</tbody></table>'
+  +       '<p class="faseft">por usuario y mes, en cada módulo contratado</p>'
+  +     '</div>'
+  +     '<div class="fase op">'
+  +       '<div class="faseh"><b>Fase de operación</b><span>a partir de entonces</span></div>'
+  +       '<table class="tarifas"><tbody>'
+  +         '<tr><td>Facturación</td><td class="r">33,00 €</td></tr>'
+  +         '<tr><td>Contabilidad</td><td class="r">33,00 €</td></tr>'
+  +         '<tr><td>Soporte a clientes</td><td class="r">33,00 €</td></tr>'
+  +         '<tr><td>RRHH — Fenix HR</td><td class="r">7,50 €</td></tr>'
+  +       '</tbody></table>'
+  +       '<p class="faseft">por usuario y mes, en cada módulo contratado</p>'
+  +     '</div>'
+  +   '</div>'
+  +   '<ul class="cond">'
+  +     '<li><b>Implantación incluida.</b> La puesta en marcha no supone una inversión adicional.</li>'
+  +     '<li><b>Fase de implementación e integración:</b> duración no superior a 6 meses.</li>'
+  +     '<li><b>Fase de operación:</b> finalizada la implementación, la tarifa baja de 50 € a 33 € por usuario y módulo.</li>'
+  +     '<li><b>Permanencia:</b> 1 año, con un mínimo hasta la finalización del desarrollo e implementación. Después continúa sin permanencia, cancelable con preaviso.</li>'
+  +     '<li><b>Número de usuarios:</b> la facturación se ajusta al número real de usuarios activos.</li>'
+  +     '<li><b>Impuestos:</b> todos los importes se incrementan con el IVA vigente (21 %).</li>'
+  +   '</ul>'
   +   '<div class="alcfoot">'
-  +     '<p><b>Este documento recoge el alcance funcional previsto.</b> El diseño y las funciones definitivas se concretan durante el desarrollo. Para condiciones económicas y plazos, solicita el presupuesto detallado.</p>'
+  +     '<p><b>Este documento recoge el alcance funcional y el modelo de tarifas.</b> El diseño y las funciones definitivas se concretan durante el desarrollo. Para una oferta cerrada con tu número de usuarios y plazos, solicita el presupuesto detallado.</p>'
   +     '<p class="alcmini">Fenix IA Solutions S.L. · CIF B22739668 · C/ La Paz 83, 03320 Elche (Alicante) · fenixia.tech · +34 966 101 029</p>'
   +   '</div>'
   + '</div>';
+}
+
+function pintarAlcance(){
+  var host = id('portalWrap');
+  host.innerHTML = ''
+  + '<header class="phead"><div class="in">'
+  +   '<img src="'+LOGO+'" alt="">'
+  +   '<div class="nm"><b>Fenix IA Solutions</b><span>Plataforma de gestión integral</span></div>'
+  +   '<button class="exit" id="volverLogin">Volver al acceso</button>'
+  + '</div></header>'
+  + contenidoAlcance();
 }
 
 function pintarLogin(){
@@ -2292,6 +2362,20 @@ id('viewRoot').addEventListener('drop', function(e){
 });
 
 /* ---- Bienvenida y cambio de usuario ---- */
+/* Alcance y condiciones, dentro de la propia pantalla de entrada. */
+function alternarAlcance(){
+  var caja = id('welcomeAlc'), btn = id('verAlcanceIni');
+  if(!caja) return;
+  var abierto = caja.classList.toggle('open');
+  btn.setAttribute('aria-expanded', abierto);
+  btn.innerHTML = (abierto?'▴':'▾')+' '+(abierto?'Ocultar':'Ver')+' alcance y condiciones económicas';
+  if(abierto && !caja.dataset.listo){
+    caja.innerHTML = contenidoAlcance();
+    caja.dataset.listo = '1';
+  }
+  if(abierto) setTimeout(function(){ caja.scrollIntoView({behavior:'smooth', block:'start'}); }, 60);
+}
+
 function entrarComo(uid){
   sesion = uid;
   filtroEmp = 'all';
@@ -2302,6 +2386,7 @@ function entrarComo(uid){
   toast('Sesión de '+a.nombre+' · '+(esAdmin()?'ve las tres empresas':'solo '+a.empresas));
 }
 id('welcome').addEventListener('click', function(e){
+  if(e.target.closest('#verAlcanceIni')){ alternarAlcance(); return; }
   var b = e.target.closest('[data-user]');
   if(b) entrarComo(b.getAttribute('data-user'));
 });
