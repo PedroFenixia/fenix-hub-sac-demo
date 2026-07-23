@@ -528,11 +528,6 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .vacio{font-size:12.5px; color:var(--muted); margin:4px 0 8px;}
 
 /* ---------- Acceso al portal ---------- */
-.loginwrap{min-height:calc(100vh - 70px); display:flex; align-items:center; justify-content:center; padding:32px 24px;}
-.loginbox{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:32px 34px; width:410px; max-width:100%;}
-.loginbox h2{margin:0 0 6px; font-size:21px; font-weight:800; color:var(--ink);}
-.loginbox>p{margin:0 0 20px; font-size:13.5px; color:var(--muted); line-height:1.55;}
-.loginhint{margin:20px 0 0; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); line-height:1.9;}
 .mailchip{font-size:11.5px; font-family:inherit; color:var(--text); background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:4px 10px; margin:3px 4px 0 0; cursor:pointer;}
 .mailchip:hover{border-color:var(--gold); color:var(--gold-deep);}
 
@@ -571,8 +566,6 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .colh .n.cero{background:var(--neutral-bg); color:var(--muted); box-shadow:none;}
 
 /* ---------- Alcance de la solución ---------- */
-.verpliego{width:100%; margin-top:14px; font-size:13px; font-weight:700; font-family:inherit; color:var(--gold-deep); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 14px; cursor:pointer;}
-.verpliego:hover{border-color:var(--gold); background:var(--gold-tint);}
 .alcance{max-width:940px; margin:0 auto; padding:34px 24px 70px;}
 .alcance h1{margin:0 0 10px; font-size:29px; font-weight:800; color:var(--ink); letter-spacing:-.4px; text-wrap:balance;}
 .alcance .lead{margin:0 0 30px; font-size:15px; line-height:1.6; color:var(--text); max-width:64ch;}
@@ -647,6 +640,33 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .rl.fuerte b{font-size:15px; font-weight:800; color:var(--gold-deep);}
 .resu.op .rl.fuerte b{color:var(--ok);}
 .rsep{height:1px; background:var(--line); margin:7px 18px; border-top:1px dashed var(--line);}
+
+/* ---------- Acceso de clientes ---------- */
+.lgsplit{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); min-height:100vh;}
+@media (max-width:900px){ .lgsplit{grid-template-columns:1fr;} .lgmarca{display:none;} }
+.lgmarca{background:linear-gradient(155deg,#0a0b0d 0%,#161a21 55%,#222834 100%); color:#c8d2e0; padding:48px 46px; display:flex; flex-direction:column; justify-content:center; gap:4px;}
+.lgmtop{display:flex; align-items:center; gap:13px; margin-bottom:34px;}
+.lgmtop img{width:46px; height:46px; border-radius:12px; box-shadow:0 0 0 1px rgba(255,255,255,.16);}
+.lgmtop b{display:block; font-size:17px; font-weight:800; color:#fff; letter-spacing:-.2px;}
+.lgmtop span{font-size:11px; color:#8c97a8; letter-spacing:.5px; text-transform:uppercase;}
+.lgmarca h2{margin:0 0 14px; font-size:31px; font-weight:800; color:#fff; letter-spacing:-.6px; line-height:1.2; text-wrap:balance; max-width:15ch;}
+.lgmarca>p{margin:0 0 32px; font-size:14.5px; line-height:1.65; color:#a8b3c2; max-width:44ch;}
+.lgpts{list-style:none; margin:0 0 36px; padding:0; display:flex; flex-direction:column; gap:15px;}
+.lgpts li{display:flex; align-items:flex-start; gap:13px; font-size:13.5px; color:#c8d2e0; line-height:1.5;}
+.lgpts span{width:23px; height:23px; border-radius:50%; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); color:#fff; font-size:11.5px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;}
+.lgpie{margin:0; font-size:11.5px; color:#6c7787;}
+.lgpanel{background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 34px; position:relative;}
+.lgvolver{position:absolute; top:26px; right:30px; font-size:12.5px; font-weight:600; font-family:inherit; color:var(--muted); background:none; border:none; cursor:pointer; padding:6px 4px;}
+.lgvolver:hover{color:var(--ink);}
+.lgcaja{width:100%; max-width:396px;}
+.lgcaja h1{margin:0 0 6px; font-size:26px; font-weight:800; color:var(--ink); letter-spacing:-.4px;}
+.lgsub{margin:0 0 26px; font-size:14px; color:var(--muted); line-height:1.55;}
+.lgentrar{width:100%; margin-top:22px; padding:13px 18px; font-size:14px;}
+.lgdemo{margin-top:28px; padding-top:22px; border-top:1px solid var(--line);}
+.lgdemot{display:block; font-size:10.5px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--muted); margin-bottom:11px;}
+.lgchips{display:flex; flex-wrap:wrap; gap:6px;}
+.mailchip{font-size:11.5px; font-family:inherit; color:var(--text); background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:5px 11px; margin:0; cursor:pointer;}
+.mailchip:hover{border-color:var(--gold); color:var(--gold-deep); background:var(--gold-tint);}
 
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -905,6 +925,25 @@ function misEmpresas(){
 }
 function puedeVer(empId){ return !empId || misEmpresas().indexOf(empId)>-1; }
 function esAdmin(){ return yo().rol==='Administrador'; }
+
+/* Copia profunda de los datos de partida, para poder volver a ellos sin recargar.
+   Se clona a mano porque JSON convertiría las fechas en texto y el SLA dejaría
+   de calcularse al restaurar. */
+function clonar(v){
+  if(v instanceof Date) return new Date(v.getTime());
+  if(Array.isArray(v)) return v.map(clonar);
+  if(v && typeof v==='object'){
+    var o = {};
+    Object.keys(v).forEach(function(k){ o[k] = clonar(v[k]); });
+    return o;
+  }
+  return v;
+}
+var DB_INICIAL = clonar(DB);
+function restaurarDatos(){
+  Object.keys(DB_INICIAL).forEach(function(k){ DB[k] = clonar(DB_INICIAL[k]); });
+  seqTicket = 115; seqParte = 55; seqFactura = {vega:12, climatiza:8, electrosur:32};
+}
 
 var ESTADOS_TICKET = ['Abierto','Pendiente soporte','Asignado','En curso','Esperando al cliente','Resuelto','Cerrado'];
 /* Finales: Resuelto es un buen final, Cerrado es un final sin solución. */
@@ -1614,26 +1653,39 @@ function pintarAlcance(){
 function pintarLogin(){
   var host = id('portalWrap');
   host.innerHTML = ''
-  + '<header class="phead"><div class="in">'
-  +   '<img src="'+LOGO+'" alt="">'
-  +   '<div class="nm"><b>Asistencia técnica</b><span>Fenix IA Solutions</span></div>'
-  +   '<button class="exit" id="portalExit">Volver al panel interno</button>'
-  + '</div></header>'
-  + '<div class="loginwrap"><div class="loginbox">'
-  +   '<h2>Acceso de clientes</h2>'
-  +   '<p>Entra con el correo que nos facilitaste para abrir avisos y seguir su estado.</p>'
-  +   '<form class="pform" id="loginForm" autocomplete="off">'
-  +     '<label for="lgMail">Correo electrónico</label>'
-  +     '<input id="lgMail" type="email" placeholder="nombre@empresa.es" value="'+esc(cliDe(portalCli).contacto)+'">'
-  +     '<label for="lgPass">Contraseña</label>'
-  +     '<input id="lgPass" type="password" placeholder="••••••••" value="demo1234">'
-  +     '<button class="newbtn" id="lgBtn" type="submit" style="margin-top:18px;width:100%">Acceder</button>'
-  +   '</form>'
-  +   '<button class="verpliego" id="verAlcance">Ver el alcance de la solución →</button>'
-  +   '<p class="loginhint">Demostración · pulsa <b>Acceder</b> con cualquiera de estos correos:<br>'
-  +     DB.clientes.map(function(c){ return '<button class="mailchip" data-mail="'+esc(c.contacto)+'">'+esc(c.contacto)+'</button>'; }).join('')
-  +   '</p>'
-  + '</div></div>';
+  + '<div class="lgsplit">'
+  +   '<aside class="lgmarca">'
+  +     '<div class="lgmtop"><img src="'+LOGO+'" alt=""><div><b>Fenix HUB SAC</b><span>Asistencia técnica</span></div></div>'
+  +     '<h2>Tus avisos, en un solo sitio.</h2>'
+  +     '<p>Abre una incidencia y sabrás al momento en cuánto tiempo respondemos. Sigue el estado y habla con el técnico sin llamadas ni correos perdidos.</p>'
+  +     '<ul class="lgpts">'
+  +       '<li><span>1</span>Abres el aviso y ves su plazo de respuesta</li>'
+  +       '<li><span>2</span>Un técnico se hace cargo y te responde aquí</li>'
+  +       '<li><span>3</span>Sigues el trabajo hasta que queda resuelto</li>'
+  +     '</ul>'
+  +     '<p class="lgpie">Fenix IA Solutions · fenixia.tech</p>'
+  +   '</aside>'
+  +   '<main class="lgpanel">'
+  +     '<button class="lgvolver" id="portalExit">← Volver al panel interno</button>'
+  +     '<div class="lgcaja">'
+  +       '<h1>Acceso de clientes</h1>'
+  +       '<p class="lgsub">Entra con el correo que nos facilitaste.</p>'
+  +       '<form class="pform" id="loginForm" autocomplete="off">'
+  +         '<label for="lgMail">Correo electrónico</label>'
+  +         '<input id="lgMail" type="email" placeholder="nombre@empresa.es" value="'+esc(cliDe(portalCli).contacto)+'">'
+  +         '<label for="lgPass">Contraseña</label>'
+  +         '<input id="lgPass" type="password" placeholder="••••••••" value="demo1234">'
+  +         '<button class="newbtn lgentrar" id="lgBtn" type="submit">Acceder</button>'
+  +       '</form>'
+  +       '<div class="lgdemo">'
+  +         '<span class="lgdemot">Demostración · entra con cualquiera de estos correos</span>'
+  +         '<div class="lgchips">'+DB.clientes.map(function(c){
+              return '<button class="mailchip" data-mail="'+esc(c.contacto)+'" title="'+esc(c.nombre)+'">'+esc(c.contacto)+'</button>';
+            }).join('')+'</div>'
+  +       '</div>'
+  +     '</div>'
+  +   '</main>'
+  + '</div>';
 }
 
 function entrarPortal(mail){
@@ -2270,7 +2322,6 @@ id('portalWrap').addEventListener('click', function(e){
     pintarPortal(); return;
   }
   if(e.target.closest('[data-hist]')){ portalHistorico = !portalHistorico; pintarPortal(); return; }
-  if(e.target.id==='verAlcance'){ pintarAlcance(); return; }
   if(e.target.id==='volverLogin'){ pintarLogin(); return; }
   if(e.target.id==='portalLogout'){ portalDentro=false; portalQ=''; portalAbiertos={}; portalHistorico=false; pintarLogin(); toast('Sesión cerrada'); return; }
   var chip = e.target.closest('[data-mail]');
@@ -2523,7 +2574,17 @@ id('newbtn').addEventListener('click', function(){
   }
   toast('El alta de '+v.title.toLowerCase()+' llega en la versión final');
 });
-id('resetBtn').addEventListener('click', function(){ location.reload(); });
+id('resetBtn').addEventListener('click', function(){
+  restaurarDatos();
+  current='bandeja'; modo='lista'; filtroEmp='all'; filtroEstado='all'; filtroTipo='all';
+  pEmp='all'; pEstado='all'; pTecnico='all'; fSoloPend=false; aSoloBajos=false;
+  q=''; id('search').value='';
+  Object.keys(pagina).forEach(function(k){ pagina[k]=1; });
+  portalAbiertos={}; portalHistorico=false; portalQ=''; portalDentro=false;
+  cerrarDrawer();
+  render();
+  toast('Datos de ejemplo restaurados · sesión de '+yo().nombre);
+});
 
 var tt;
 function toast(m){
