@@ -6,7 +6,7 @@
   --side-hover:#1b1d24; --side-rule:#22252e; --side-dim:#95a0b0;
   --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --gold-tint:#eaeef4;
   --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22);
-  --badge:#d92d20; --badge-txt:#ffffff;
+  --badge:#d92d20; --badge-txt:#ffffff; --badge-halo:rgba(217,45,32,.22);
   --ok:#1f7a52; --warn:#b5730a; --danger:#c0392b; --neutral:#6b7684;
   --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea; --neutral-bg:#eef1f5;
   --ticket:#4b46b8; --ticket-bg:#ecebfb;
@@ -21,7 +21,7 @@
     --ink:#f2f4f8; --text:#c3cad6; --muted:#8b94a3; --line:#2a2f3a;
     --bg:#111318; --surface:#181b22; --surface-2:#1d212a; --sidebar:#08090b;
     --side-txt:#aeb8c6; --side-hover:#1b1d24; --side-rule:#22252e;
-    --badge:#f0503c; --badge-txt:#1a0d0b; --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
+    --badge:#f0503c; --badge-txt:#1a0d0b; --badge-halo:rgba(240,80,60,.28); --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
     --neutral-bg:#22262f; --ticket:#9d99ee; --ticket-bg:#20203a;
     --ok:#4bbd88; --warn:#e0a136; --danger:#e8695a; --neutral:#98a1ae;
     --vega:#6c9bf0; --climatiza:#3fc9b6; --electrosur:#e08a48;
@@ -32,7 +32,7 @@
   --ink:#f2f4f8; --text:#c3cad6; --muted:#8b94a3; --line:#2a2f3a;
   --bg:#111318; --surface:#181b22; --surface-2:#1d212a; --sidebar:#08090b;
   --side-txt:#aeb8c6; --side-hover:#1b1d24; --side-rule:#22252e;
-  --badge:#f0503c; --badge-txt:#1a0d0b; --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
+  --badge:#f0503c; --badge-txt:#1a0d0b; --badge-halo:rgba(240,80,60,.28); --gold-tint:#252a33; --gold:#c8d2e0; --gold-deep:#aab6c6; --gold-lt:#e2e9f2; --on-accent:#0d1117; --accent-ring:rgba(200,210,224,.25); --accent-glow:rgba(0,0,0,.45); --ok-bg:#12291f; --warn-bg:#2c2011; --danger-bg:#2e1614;
   --neutral-bg:#22262f; --ticket:#9d99ee; --ticket-bg:#20203a;
   --ok:#4bbd88; --warn:#e0a136; --danger:#e8695a; --neutral:#98a1ae;
   --vega:#6c9bf0; --climatiza:#3fc9b6; --electrosur:#e08a48;
@@ -41,7 +41,7 @@
 :root[data-theme="light"]{
   --ink:#151a21; --text:#3a434f; --muted:#8a94a1; --line:#e2e7ee;
   --bg:#eef1f5; --surface:#ffffff; --surface-2:#fbfcfd; --sidebar:#0a0b0d;
-  --badge:#d92d20; --badge-txt:#ffffff; --gold-tint:#eaeef4; --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22); --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea;
+  --badge:#d92d20; --badge-txt:#ffffff; --badge-halo:rgba(217,45,32,.22); --gold-tint:#eaeef4; --gold:#2f3742; --gold-deep:#1d232c; --gold-lt:#48525f; --on-accent:#ffffff; --accent-ring:rgba(47,55,66,.22); --accent-glow:rgba(15,23,34,.22); --ok-bg:#e3f0ea; --warn-bg:#fef3e0; --danger-bg:#fdeaea;
   --neutral-bg:#eef1f5; --ticket:#4b46b8; --ticket-bg:#ecebfb;
   --ok:#1f7a52; --warn:#b5730a; --danger:#c0392b; --neutral:#6b7684;
   --vega:#2d6cdf; --climatiza:#12a594; --electrosur:#c0621b;
@@ -84,8 +84,8 @@ body{
 .item:hover .ic{color:#c6cfdb;}
 .item.on{background:linear-gradient(90deg,var(--gold),var(--gold-lt)); color:var(--on-accent); font-weight:700; box-shadow:0 6px 16px var(--accent-glow);}
 .item.on .ic{color:var(--on-accent);}
-.item .cnt{margin-left:auto; font-size:10.5px; font-weight:700; background:rgba(255,255,255,.12); color:#cdd6e2; border-radius:20px; padding:1px 8px; font-variant-numeric:tabular-nums;}
-.item.on .cnt{background:rgba(255,255,255,.18); color:var(--on-accent);}
+.item .cnt{margin-left:auto; font-size:11px; font-weight:800; background:var(--badge); color:var(--badge-txt); border-radius:20px; padding:1px 8px; font-variant-numeric:tabular-nums; box-shadow:0 0 0 2px var(--badge-halo);}
+.item.on .cnt{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px rgba(255,255,255,.4);}
 .sec{font-size:10.5px; font-weight:700; letter-spacing:1.4px; color:#97a3b4; text-transform:uppercase; margin:18px 12px 6px;}
 .user{display:flex; align-items:center; gap:10px; margin-top:18px; border-top:1px solid var(--side-rule); padding:14px 6px 4px; width:100%; background:none; border-left:none; border-right:none; border-bottom:none; cursor:pointer; font-family:inherit; text-align:left; border-radius:0 0 9px 9px;}
 .user:hover{background:var(--side-hover);}
@@ -402,7 +402,7 @@ tbody tr:last-child td{border-bottom:none;}
 .statepick button:hover{border-color:var(--muted);}
 .statepick button.on{background:var(--ink); color:var(--surface); border-color:var(--ink);}
 .statepick button i{width:8px; height:8px; border-radius:50%;}
-.unread{display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 6px; border-radius:20px; background:var(--badge); color:var(--badge-txt); font-size:11px; font-weight:800; margin-left:8px; vertical-align:middle; box-shadow:0 0 0 2px rgba(217,45,32,.2); font-variant-numeric:tabular-nums;}
+.unread{display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 6px; border-radius:20px; background:var(--badge); color:var(--badge-txt); font-size:11px; font-weight:800; margin-left:8px; vertical-align:middle; box-shadow:0 0 0 2px var(--badge-halo); font-variant-numeric:tabular-nums;}
 
 /* ---------- Tablero kanban ---------- */
 .board{display:grid; grid-template-columns:repeat(4,minmax(224px,1fr)); gap:14px; align-items:start; overflow-x:auto; padding-bottom:6px;}
@@ -412,7 +412,7 @@ tbody tr:last-child td{border-bottom:none;}
 .colh{display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line);}
 .colh i{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
 .colh b{font-size:12.5px; color:var(--ink); font-weight:700;}
-.colh .n{margin-left:auto; font-size:11px; font-weight:700; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:1px 8px; font-variant-numeric:tabular-nums;}
+.colh .n{margin-left:auto; font-size:11px; font-weight:800; color:var(--badge-txt); background:var(--badge); border-radius:20px; padding:1px 8px; font-variant-numeric:tabular-nums; box-shadow:0 0 0 2px var(--badge-halo);}
 .colb{padding:10px; display:flex; flex-direction:column; gap:9px; flex:1;}
 .kc{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; cursor:grab; box-shadow:var(--shadow);}
 .kc:active{cursor:grabbing;}
@@ -466,7 +466,7 @@ tbody tr:hover .rowact, tbody tr:focus-within .rowact{opacity:1;}
 .kpiact:hover{border-color:var(--muted);}
 .kpiact.on{border-color:var(--gold); box-shadow:0 0 0 3px var(--accent-ring);}
 .kpiact.on::before{background:var(--gold);}
-.item .cnt.alerta{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px rgba(217,45,32,.25);}
+.item .cnt.alerta{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px var(--badge-halo);}
 .item.on .cnt.alerta{background:var(--badge); color:var(--badge-txt); box-shadow:0 0 0 2px rgba(255,255,255,.35);}
 
 /* ---------- Barra de filtros en dos niveles ---------- */
@@ -566,6 +566,8 @@ tbody tr.corte td{border-top:2px solid var(--line);}
 .tklast b{color:var(--muted); font-weight:600; font-size:11px; display:block; margin-bottom:3px;}
 
 .psearch{width:100%; min-width:0; margin-bottom:14px;}
+
+.colh .n.cero{background:var(--neutral-bg); color:var(--muted); box-shadow:none;}
 
 .toast{
   position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -1151,7 +1153,7 @@ function cuerpoTablero(){
     var accion = ESTADOS_ACCION.indexOf(est)>-1;
     return '<section class="col'+(accion?' accion':'')+'" data-col="'+est+'">'
       + '<div class="colh"><i style="background:'+COLOR_ESTADO[est]+'"></i><b>'+est+'</b>'
-      +   (accion?'<span class="doing">acción</span>':'')+'<span class="n">'+enCol.length+'</span></div>'
+      +   (accion?'<span class="doing">acción</span>':'')+'<span class="n'+(enCol.length?'':' cero')+'">'+enCol.length+'</span></div>'
       + '<div class="colb">'+(cards || '<div class="colempty">Nada aquí</div>')+'</div>'
       + '</section>';
   }).join('');
